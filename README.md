@@ -1,0 +1,173 @@
+# Iguazu
+
+An asynchronous data flow solution for React/Redux applications.
+
+## Motivation
+[react-redux](https://github.com/reduxjs/react-redux) works great for when you want to take data that already exists in state and inject it as props into a React component, but it doesn't help you at all with the flow of loading asynchronous data into state. If a react component relies on asynchronous data you typically have to do three things:
+
+1. Define a load action responsible for fetching the asynchronous data, which should be triggered on mount and when the component receives new props that change what data should be loaded
+2. Define a `mapStateToProps` function and use selectors to get the data out of state
+3. Determine whether the state is actually loaded based on the props the selectors return
+
+Iguazu seeks to simplify this flow into one step.
+
+## Usage
+Iguazu exports a Higher Order Component (HOC) `connectAsync` similar to React Redux's `connect`.  Instead of taking a `mapStateToProps` function, it takes a `loadDataAsProps` function. It should return a map where each key is the name of a prop that will contain some asynchronous data and the value is the load function that will load that data if it is not already loaded.  The load function must synchronously return an object with the keys `data`, `status`, and `promise`. The key `data` should be the data returned from the asynchronous call. The key `status` should be either `loading` to signal the asynchronous call is in flight or `complete` to signal it has returned. The key `promise` should be the promise of the asynchronous call.
+
+For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass a prop called `loadStatus` that is an object with the load status for each of the data props. The object also contains a key `all` that will be `complete` if all async data is done loading or `loading` if even one prop is still loading.
+
+Example:
+
+```javascript
+/* MyContainer.jsx */
+import React from 'react';
+import { connectAsync } from 'iguazu';
+
+function MyContainer({ myData, myOtherData, loadStatus }) => {
+  if (loadStatus.all !== 'complete') {
+    return <div>Loading...</div>
+  }
+
+  return <div>myData = {myData} myOtherData = {myOtherData}</div>
+}
+
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => dispatch(queryMyData(ownProps.someParam)),
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+  }
+}
+
+export default connectAsync({ loadDataAsProps })(MyContainer);
+
+/* actions.js */
+export function queryMyData(param) {
+  return (dispatch, getState) => {
+    const data = getState().path.to.myData[param];
+    const status = data ? 'complete' : 'loading';
+    const promise = data ? Promise.resolve : dispatch(fetchMyData(param));
+
+    return { data, status, promise };
+  }
+}
+
+export function queryMyOtherData(param) {/* Essentially the same as queryMyData */};
+```
+
+You can see that by moving the logic responsible for selecting out the cached data and triggering a fetch if needed into the actions makes the components much simpler.
+
+## Advanced Usage
+### SSR
+The main benefits of server side rendering are improved perceived speed and SEO. With perceived speed, the general best practice is to get something in front of the user's eyes as fast as possible. Typically that means you shouldn't wait for any data before rendering to string. For SEO, it's more important that you render the full content, and if that content is dynamic, you'll need to wait on some data. Usually not every view is important for SEO, such as logged in views, so the best option is to only preload data you absolutely have to for SEO. For this reason, Iguazu makes SSR data preloading opt in. If you would like a component's data to be loaded prior to rendering on the server, you can add a property named `ssr` with the value of true.
+
+**Note:** Whether or not you are planning on waiting for data to load before doing a server side render, you will need to tell Iguazu it is running on node by calling `enableSSR`. Otherwise it will assume it is running on the client and will execute the load functions in `componentWillMount` during `renderToString` whether you opted in or not. If you're not running `renderToString`, you don't have to worry.
+
+Example:
+
+```javascript
+/* server.js */
+import { enableSSR } from 'iguazu';
+import express from 'express';
+
+enableSSR();
+
+const app = express();
+// Set up express app
+
+/* Component.jsx */
+function loadDataAsProps() {...}
+loadDataAsProps.ssr = true;
+```
+
+Iguazu supports react-async-bootstrapper so that you are not restricted to using iguazu for ssr data preloading.  See react-async-bootstrapper's documentation for instructions on how to wait on SSR data preloading.
+
+#### Helper methods
+Sometimes you might want to enable SSR preloading for a component, but only for some of its data. Iguazu provides some helper methods, `defer` and `noncritical`, to more granularly load data on the server. If you wrap a load function with `defer`, it will not execute the load function at all and will just return a status of `loading`. If you wrap a function with `noncritical`, the load function will execute, but its promise will be caught so that if it rejects it won't cause the Promise.all to reject and return before the other more critical pieces of data have returned.
+
+**Note:** Wrapping your load function in defer or noncritical will mean that its load status will not be included in `loadStatus.all`.  You will need to granularly check whether that data is loaded or not.
+
+Example:
+
+```javascript
+import { defer, noncritical } from 'iguazu';
+
+function loadDataAsProps() {
+  return {
+    clientOnlyData: defer(() => dispatch(loadClientData())),
+    tryToLoadOnServerData: noncritical(() => dispatch(loadIffyData()))
+  }
+}
+```
+
+Iguazu will also pass a parameter to the load function that tells it whether it is running on the server or not. You might want to use this if you expect data to have a specific shape when it is not loaded, because `defer` will just return data as undefined.
+
+Example:
+
+```javascript
+function MyComponent({ someData }) {
+  return <ul>{someData.list.map(item => <li key={item.toString()}>{item}</li>)}</ul>
+}
+
+function loadDataAsProps() {
+  return {
+    someData: ({ ssr }) =>
+      (ssr ? { data: { list: [] }, status: 'loading' } : dispatch(loadSomeData()))
+  }
+}
+```
+
+### Synchronization
+Let's say you have a dynamic dashboard of components that are all responsible for loading their own data, but you want to wait until they are all loaded to render them so that you don't see a bunch of spinners or a partially loaded page. Since Iguazu attaches the loadDataAsProps function as a static, parent components can easily wait until their children's data is loaded before rendering them.
+
+```javascript
+import React from 'react';
+import { iguazuReduce } from 'iguazu';
+import ComponentA from './ComponentA';
+import ComponentB from './ComponentB';
+
+function MyComponent({ loadStatus }) {
+  if (loadStatus.all !== 'complete') {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <div>
+      <ComponentA someParam="someParam" />
+      <ComponentB />
+    <div>
+  );
+}
+
+function loadDataAsProps({ store, ownProps }) {
+  const componentA
+  return {
+    ComponentA: () => iguazuReduce(ComponentA.loadDataAsProps({
+      store, ownProps: { someParam: 'someParam' }
+    })),
+    ComponentB: () => iguazuReduce(ComponentB.loadDataAsProps({ store, ownProps: {} }))
+  }
+}
+```
+
+## Why is it called Iguazu?
+This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
+
+## Contributing
+We welcome Your interest in the American Express Open Source Community on Github.
+Any Contributor to any Open Source Project managed by the American Express Open
+Source Community must accept and sign an Agreement indicating agreement to the
+terms below. Except for the rights granted in this Agreement to American Express
+and to recipients of software distributed by American Express, You reserve all
+right, title, and interest, if any, in and to Your Contributions. Please [fill
+out the Agreement](https://cla-assistant.io/americanexpress/iguazu).
+
+Please feel free to open pull requests and see [CONTRIBUTING.md](./CONTRIBUTING.md) for commit formatting details.
+
+## License
+Any contributions made under this project will be governed by the [Apache License
+2.0](https://github.com/americanexpress/iguazu/blob/master/LICENSE.txt).
+
+## Code of Conduct
+This project adheres to the [American Express Community Guidelines](https://github.com/americanexpress/iguazu/blob/master/Code-of-Conduct).
+By participating, you are expected to honor these guidelines.

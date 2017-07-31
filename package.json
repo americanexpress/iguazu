@@ -1,0 +1,45 @@
+{
+  "name": "iguazu",
+  "version": "1.0.0",
+  "description": "An asynchronous data flow solution for React/Redux applications",
+  "author": "Maia Teegarden",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "babel src --out-dir lib",
+    "lint": "eslint --ignore-path .gitignore --ext js,jsx .",
+    "prepublish": "npm run build",
+    "test": "jest",
+    "posttest": "npm run lint"
+  },
+  "jest": {
+    "preset": "amex-jest-preset-react"
+  },
+  "dependencies": {
+    "babel-preset-react": "^6.24.1",
+    "hoist-non-react-statics": "^1.2.0",
+    "lodash": "^4.17.4",
+    "promise-settle": "^0.3.0",
+    "prop-types": "^15.5.10",
+    "react": "^15.5.4",
+    "shallowequal": "^1.0.1"
+  },
+  "devDependencies": {
+    "amex-jest-preset-react": "^2.0.0",
+    "babel-cli": "^6.24.1",
+    "babel-plugin-add-module-exports": "^0.2.1",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-preset-env": "^1.5.1",
+    "enzyme": "^2.8.2",
+    "enzyme-to-json": "^1.5.1",
+    "eslint": "^3.19.0",
+    "eslint-config-amex": "^4.0.0",
+    "jest": "^20.0.4",
+    "react-async-bootstrapper": "^1.1.1",
+    "react-dom": "^15.5.4",
+    "react-redux": "^5.0.5",
+    "react-test-renderer": "^15.5.4",
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.2.0"
+  }
+}
