@@ -13,40 +13,54 @@ export default function connectAsync({ loadDataAsProps }) {
     const propFuncs = loadDataAsProps({ store, ownProps });
     const ssr = isSSR();
 
-    let state;
+    let propResultMap;
     if (ssr && !ssrEnabled) {
-      state = mapValues(propFuncs, () => ({ status: 'loading' }));
+      propResultMap = mapValues(propFuncs, () => ({ status: 'loading' }));
     } else {
-      state = mapValues(propFuncs, value => value({ ssr }));
+      propResultMap = mapValues(propFuncs, value => value({ ssr }));
     }
 
-    return state;
+    return {
+      data: reduceData(propResultMap),
+      status: reduceStatus(propResultMap),
+    };
   }
 
   return function wrapWithConnectAsync(WrappedComponent) {
     class ConnectAsync extends React.Component {
 
-      componentWillMount() {
-        this.mounted = true;
-        this.setState(buildState({ store: this.context.store, ownProps: this.props }));
+      constructor(props, context) {
+        super(props);
+        this.state = buildState({ store: context.store, ownProps: props });
+        this.setStateIfNecessary = this.setStateIfNecessary.bind(this);
       }
 
       componentDidMount() {
+        this.mounted = true;
         const { store } = this.context;
+        const ownProps = this.props;
         this.unsubscribe = store.subscribe(
-          () => (this.mounted && this.setState(buildState({ store, ownProps: this.props })))
+          () => (this.mounted && this.setStateIfNecessary(buildState({ store, ownProps })))
         );
       }
 
       componentWillReceiveProps(nextProps) {
         if (!shallowequal(this.props, nextProps)) {
-          this.setState(buildState({ store: this.context.store, ownProps: nextProps }));
+          this.setStateIfNecessary(buildState({ store: this.context.store, ownProps: nextProps }));
         }
       }
 
       componentWillUnmount() {
         this.mounted = false;
         this.unsubscribe();
+      }
+
+      setStateIfNecessary(newState) {
+        const dataIsEqual = shallowequal(this.state.data, newState.data);
+        const statusIsEqual = shallowequal(this.state.status, newState.status);
+        if (!dataIsEqual || !statusIsEqual) {
+          this.setState(newState);
+        }
       }
 
       asyncBootstrap() {
@@ -57,8 +71,7 @@ export default function connectAsync({ loadDataAsProps }) {
       }
 
       render() {
-        const data = reduceData(this.state);
-        const status = reduceStatus(this.state);
+        const { data, status } = this.state;
         return <WrappedComponent loadStatus={status} {...data} {...this.props} />;
       }
     }

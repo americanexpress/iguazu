@@ -76,7 +76,8 @@ describe('connectAsync', () => {
     }),
   }));
 
-  const Presentation = () => null;
+  const renderSpy = jest.fn();
+  const Presentation = () => { renderSpy(); return null; };
   const Container = connectAsync({ loadDataAsProps })(Presentation);
 
   let iguazuApp;
@@ -132,6 +133,12 @@ describe('connectAsync', () => {
     expect(props.myAsyncData).not.toBeDefined();
     expect(props.loadStatus).toEqual({ all: 'loading', myAsyncData: 'loading' });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(2);
+  });
+
+  it('should not rerender when the store has updated, but the data and status are the same', () => {
+    mount(iguazuApp);
+    store.dispatch({ type: 'IRRELEVANT_ACTION' });
+    expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should not update data and load status when store has updated but it has unmounted', () => {
