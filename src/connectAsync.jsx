@@ -33,14 +33,14 @@ export default function connectAsync({ loadDataAsProps }) {
         super(props);
         this.state = buildState({ store: context.store, ownProps: props });
         this.setStateIfNecessary = this.setStateIfNecessary.bind(this);
+        this.onReduxStateChange = this.onReduxStateChange.bind(this);
       }
 
       componentDidMount() {
         this.mounted = true;
         const { store } = this.context;
-        const ownProps = this.props;
         this.unsubscribe = store.subscribe(
-          () => (this.mounted && this.setStateIfNecessary(buildState({ store, ownProps })))
+          () => (this.mounted && this.onReduxStateChange())
         );
       }
 
@@ -53,6 +53,12 @@ export default function connectAsync({ loadDataAsProps }) {
       componentWillUnmount() {
         this.mounted = false;
         this.unsubscribe();
+      }
+
+      onReduxStateChange() {
+        const { store } = this.context;
+        const ownProps = this.props;
+        this.setStateIfNecessary(buildState({ store, ownProps }));
       }
 
       setStateIfNecessary(newState) {
