@@ -142,10 +142,10 @@ function MyComponent({ loadStatus }) {
 function loadDataAsProps({ store, ownProps }) {
   const componentA
   return {
-    ComponentA: () => iguazuReduce(ComponentA.loadDataAsProps({
+    ComponentA: () => iguazuReduce(ComponentA.loadDataAsProps)({
       store, ownProps: { someParam: 'someParam' }
-    })),
-    ComponentB: () => iguazuReduce(ComponentB.loadDataAsProps({ store, ownProps: {} }))
+    }),
+    ComponentB: () => iguazuReduce(ComponentB.loadDataAsProps)({ store, ownProps: {} })
   }
 }
 ```
