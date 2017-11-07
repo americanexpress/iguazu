@@ -99,6 +99,7 @@ describe('connectAsync', () => {
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
     wrapper.setProps({ irrelevant: 'new' });
     store.dispatch({ type: 'UPDATE_PARAM', param: 'y' });
+    wrapper.update();
     props = wrapper.find(Presentation).props();
     expect(loadDataAsProps.mock.calls[2][0].ownProps.irrelevant).toEqual('new');
     expect(props.myAsyncData).not.toBeDefined();
