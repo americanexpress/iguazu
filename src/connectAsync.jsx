@@ -2,9 +2,11 @@ import React from 'react';
 import hoistStatics from 'hoist-non-react-statics';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
+import pick from 'lodash/pick';
+import values from 'lodash/values';
 import mapValues from 'lodash/mapValues';
 
-import { reduceData, reduceStatus, reducePromise } from './reduce';
+import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
 import { isSSR } from './ssr';
 
 export default function connectAsync({ loadDataAsProps }) {
@@ -23,6 +25,7 @@ export default function connectAsync({ loadDataAsProps }) {
     return {
       data: reduceData(propResultMap),
       status: reduceStatus(propResultMap),
+      errors: reduceErrors(propResultMap),
     };
   }
 
@@ -34,6 +37,8 @@ export default function connectAsync({ loadDataAsProps }) {
         this.state = buildState({ store: context.store, ownProps: props });
         this.setStateIfNecessary = this.setStateIfNecessary.bind(this);
         this.onReduxStateChange = this.onReduxStateChange.bind(this);
+        this.isLoading = this.isLoading.bind(this);
+        this.loadedWithErrors = this.loadedWithErrors.bind(this);
       }
 
       componentDidMount() {
@@ -64,21 +69,47 @@ export default function connectAsync({ loadDataAsProps }) {
       setStateIfNecessary(newState) {
         const dataIsEqual = shallowequal(this.state.data, newState.data);
         const statusIsEqual = shallowequal(this.state.status, newState.status);
-        if (!dataIsEqual || !statusIsEqual) {
+        const errorsAreEqual = shallowequal(this.state.errors, newState.errors);
+        if (!dataIsEqual || !statusIsEqual || !errorsAreEqual) {
           this.setState(newState);
         }
+      }
+
+      isLoading(propsOfInterest) {
+        const loadStatusMap = this.state.status;
+        const statusesOfInterest =
+          values(propsOfInterest ? pick(loadStatusMap, propsOfInterest) : loadStatusMap);
+
+        return statusesOfInterest.some(status => status === 'loading');
+      }
+
+      loadedWithErrors(propsOfInterest) {
+        const loadErrorMap = this.state.errors;
+        const errorsOfInterest =
+          values(propsOfInterest ? pick(loadErrorMap, propsOfInterest) : loadErrorMap);
+
+        return errorsOfInterest.some(error => error);
       }
 
       asyncBootstrap() {
         if (!ssrEnabled) return false;
 
         return reducePromise(buildState({ store: this.context.store, ownProps: this.props }))
-            .then(() => true);
+          .then(() => true);
       }
 
       render() {
-        const { data, status } = this.state;
-        return <WrappedComponent loadStatus={status} {...data} {...this.props} />;
+        const { data, status, errors } = this.state;
+        return (
+          <WrappedComponent
+            loadStatus={status}
+            isLoading={this.isLoading}
+            loadErrors={errors}
+            loadedWithErrors={this.loadedWithErrors}
+            {...data}
+            {...this.props}
+          />
+        );
       }
     }
 

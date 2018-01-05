@@ -4,6 +4,7 @@ import iguazuReduce, {
   reduceData,
   reduceStatus,
   reducePromise,
+  reduceErrors,
 } from '../src/reduce';
 
 describe('reducers', () => {
@@ -36,6 +37,25 @@ describe('reducers', () => {
         y: { status: 'loading' },
       };
       expect(reduceStatus(loadResponseMap)).toEqual({ all: 'loading', x: 'complete', y: 'loading' });
+    });
+  });
+
+  describe('reduceErrors', () => {
+    it('should return the expected output when all responses loaded without errors', () => {
+      const loadResponseMap = {
+        x: { error: undefined },
+        y: {},
+      };
+      expect(reduceErrors(loadResponseMap)).toEqual({ any: false });
+    });
+
+    it('should return the expected output when some responses loaded with errors', () => {
+      const loadError = new Error('Async data loaded with an error');
+      const loadResponseMap = {
+        x: { error: loadError },
+        y: {},
+      };
+      expect(reduceErrors(loadResponseMap)).toEqual({ any: true, x: loadError });
     });
   });
 

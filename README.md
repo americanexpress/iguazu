@@ -12,9 +12,9 @@ An asynchronous data flow solution for React/Redux applications.
 Iguazu seeks to simplify this flow into one step.
 
 ## Usage
-Iguazu exports a Higher Order Component (HOC) `connectAsync` similar to React Redux's `connect`.  Instead of taking a `mapStateToProps` function, it takes a `loadDataAsProps` function. It should return a map where each key is the name of a prop that will contain some asynchronous data and the value is the load function that will load that data if it is not already loaded.  The load function must synchronously return an object with the keys `data`, `status`, and `promise`. The key `data` should be the data returned from the asynchronous call. The key `status` should be either `loading` to signal the asynchronous call is in flight or `complete` to signal it has returned. The key `promise` should be the promise of the asynchronous call.
+Iguazu exports a Higher Order Component (HOC) `connectAsync` similar to React Redux's `connect`.  Instead of taking a `mapStateToProps` function, it takes a `loadDataAsProps` function. It should return a map where each key is the name of a prop that will contain some asynchronous data and the value is the load function that will load that data if it is not already loaded.  The load function must synchronously return an object with the keys `data`, `status`, `error`, and `promise`. The key `data` should be the data returned from the asynchronous call. The key `status` should be either `loading` to signal the asynchronous call is in flight or `complete` to signal it has returned. The key `error` should be a truthy value if there was an error while loading. The key `promise` should be the promise of the asynchronous call.
 
-For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass a prop called `loadStatus` that is an object with the load status for each of the data props. The object also contains a key `all` that will be `complete` if all async data is done loading or `loading` if even one prop is still loading.
+For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass two function props, `isLoading` and `loadedWithErrors`, which will tell you if any of the async props are still loading or loaded with errors respecitively. If you are only interested in a subset of async props, you can pass an array of the props names as the first argument. There will also be a prop named `loadErrors` that maps the load error, if there is one, for each prop. You can use this if you want to more granularly dig into what failed.
 
 Example:
 
@@ -23,9 +23,13 @@ Example:
 import React from 'react';
 import { connectAsync } from 'iguazu';
 
-function MyContainer({ myData, myOtherData, loadStatus }) => {
-  if (loadStatus.all !== 'complete') {
+function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) => {
+  if (isLoading()) {
     return <div>Loading...</div>
+  }
+
+  if (loadedWithErrors()) {
+    return <div>Oh no! Something went wrong</div>
   }
 
   return <div>myData = {myData} myOtherData = {myOtherData}</div>
@@ -85,8 +89,6 @@ Iguazu supports react-async-bootstrapper so that you are not restricted to using
 #### Helper methods
 Sometimes you might want to enable SSR preloading for a component, but only for some of its data. Iguazu provides some helper methods, `defer` and `noncritical`, to more granularly load data on the server. If you wrap a load function with `defer`, it will not execute the load function at all and will just return a status of `loading`. If you wrap a function with `noncritical`, the load function will execute, but its promise will be caught so that if it rejects it won't cause the Promise.all to reject and return before the other more critical pieces of data have returned.
 
-**Note:** Wrapping your load function in defer or noncritical will mean that its load status will not be included in `loadStatus.all`.  You will need to granularly check whether that data is loaded or not.
-
 Example:
 
 ```javascript
@@ -126,8 +128,8 @@ import { iguazuReduce } from 'iguazu';
 import ComponentA from './ComponentA';
 import ComponentB from './ComponentB';
 
-function MyComponent({ loadStatus }) {
-  if (loadStatus.all !== 'complete') {
+function MyComponent({ isLoading }) {
+  if (isLoading()) {
     return <div>Loading...</div>
   }
 

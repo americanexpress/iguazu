@@ -136,6 +136,80 @@ describe('connectAsync', () => {
     expect(connectAsync({ loadDataAsProps })(() => null).displayName).toBe('connectAsync(Component)');
   });
 
+  describe('isLoading', () => {
+    it('should be provided as a prop to the wrapped component', () => {
+      const wrapper = mount(<Container />, { context: { store } });
+      const props = wrapper.find(Presentation).props();
+      expect(props.isLoading).toBe(wrapper.instance().isLoading);
+    });
+
+    describe('no props of interest provided', () => {
+      it('should return true when any of the async props are in the middle of loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ status: { a: 'loading', b: 'complete' } });
+        expect(wrapper.instance().isLoading()).toBe(true);
+      });
+
+      it('should return false when all of the async props are done loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ status: { a: 'complete', b: 'complete' } });
+        expect(wrapper.instance().isLoading()).toBe(false);
+      });
+    });
+
+    describe('props of interest provided', () => {
+      it('should return true when any of the async props of intereset are in the middle of loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ status: { a: 'loading', b: 'complete', c: 'complete' } });
+        expect(wrapper.instance().isLoading(['a', 'c'])).toBe(true);
+      });
+
+      it('should return false when all of the async props of interest are done loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ status: { a: 'loading', b: 'complete', c: 'complete' } });
+        expect(wrapper.instance().isLoading(['b', 'c'])).toBe(false);
+      });
+    });
+  });
+
+  describe('loadedWithErrors', () => {
+    const loadError = new Error('A wild load error appeared');
+
+    it('should be provided as a prop to the wrapped component', () => {
+      const wrapper = mount(<Container />, { context: { store } });
+      const props = wrapper.find(Presentation).props();
+      expect(props.loadedWithErrors).toBe(wrapper.instance().loadedWithErrors);
+    });
+
+    describe('no props of interest provided', () => {
+      it('should return true if any of the async props had an error while loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ errors: { a: loadError, b: undefined } });
+        expect(wrapper.instance().loadedWithErrors()).toBe(true);
+      });
+
+      it('should return false if all of the async props loaded without errors', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ errors: {} });
+        expect(wrapper.instance().loadedWithErrors()).toBe(false);
+      });
+    });
+
+    describe('props of interest provided', () => {
+      it('should return true when any of the async props of intereset had an error while loading', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ errors: { a: loadError } });
+        expect(wrapper.instance().loadedWithErrors(['a'])).toBe(true);
+      });
+
+      it('should return false if all of the async props of interest loaded without errors', () => {
+        const wrapper = mount(<Container />, { context: { store } });
+        wrapper.setState({ errors: { a: loadError } });
+        expect(wrapper.instance().loadedWithErrors(['b', 'c'])).toBe(false);
+      });
+    });
+  });
+
   describe('SSR', () => {
     class ProviderMock extends Component {
       getChildContext() {

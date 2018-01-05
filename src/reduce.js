@@ -20,6 +20,19 @@ export function reduceStatus(loadResponseMap) {
   return loadStatusMap;
 }
 
+export function reduceErrors(loadResponseMap) {
+  const responses = values(loadResponseMap);
+
+  const loadErrorMap = mapValues(loadResponseMap, response => response.error);
+  loadErrorMap.any =
+    responses
+      .filter(response => !response.noncritical)
+      .map(response => response.error)
+      .some(error => error);
+
+  return loadErrorMap;
+}
+
 export function reducePromise(loadResponseMap) {
   return Promise.all(values(loadResponseMap).map(response => response.promise));
 }
@@ -34,11 +47,13 @@ export default function iguazuReduce(loadFunc) {
 
     const data = reduceData(loadResponseMap);
     const status = reduceStatus(loadResponseMap).all;
+    const error = reduceErrors(loadResponseMap).any;
     const promise = reducePromise(loadResponseMap);
 
     return {
       data,
       status,
+      error,
       promise,
     };
   };
