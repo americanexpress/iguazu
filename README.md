@@ -152,6 +152,155 @@ function loadDataAsProps({ store, ownProps }) {
 }
 ```
 
+### Sequencing
+
+Quite often you need the results of one asynchronous call to get the inputs for another call. One way to do this is by simply using components.
+
+Example:
+
+```javascript
+import React from 'react';
+import { connectAsync } from 'iguazu';
+
+function Parent({ isLoading, parent }) {
+  if (isLoading()) {
+    return <div>Loading Your Profile...</div>;
+  }
+
+  return (
+    <div>
+      <div>
+        You:
+        <PersonInfo info={parent} />
+      </div>
+      <KidsContainer parentId={parent.id} />
+    </div>
+  );
+}
+
+function parentLoadDataAsProps({ store: { dispatch } }) {
+  return {
+    parents: dispatch(loadLoggedInParent()),
+  };
+}
+
+const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent)
+
+function Kids({ isLoading, kids }) {
+  if (isLoading()) {
+    return <div>Loading Kids...</div>;
+  }
+
+  return (
+    <div>
+      Kids:
+      {kids.map((kid) => (<PersonInfo info={kid} />))}
+    </div>
+  );
+}
+
+function kidsLoadDataAsProps({ store: { dispatch }, ownProps: { parentId } }) {
+  return {
+    kids: dispatch(loadKidsByParent(parentId)),
+  };
+}
+
+const KidsContainer = connectAsync({ loadDataAsProps: kidsLoadDataAsProps })(Kids)
+
+function PersonInfo({ info: { name, age } }) {
+  return {
+    <div>
+      <span>name: {name}</span>
+      <span>age: {age}</span>
+    </div>
+  }
+}
+```
+
+Suppose you want to synchronize the parent and kid components so that you show a loading spinner until they are both done loading their data. Or maybe you only have one component that needs some sequenced data and it doesn't make sense to create a new component for each nested piece of data. In these cases you can use the load helper, `sequence`. You can pass it an array of load functions that need to run in order and depend on data returned from previous functions.
+
+Example:
+
+```javascript
+import React from 'react';
+import { connectAsync, sequence } from 'iguazu';
+
+function Parent({ isLoading, parent, kids }) {
+  if (isLoading()) {
+    return <div>Loading Your Profile...</div>;
+  }
+
+  return (
+    <div>
+      <div>
+        You:
+        <PersonInfo info={parent} />
+      </div>
+      <Kids kids={kids} />
+    </div>
+  );
+}
+
+function parentLoadDataAsProps({ store: { dispatch } }) {
+  const sequenceLoadFunctions = sequence[
+    { key: 'parent', handler: () => dispatch(loadLoggedInParent()) },
+    { key: 'kids', handler: ({ parent }) => dispatch(loadKidsByParent(parent.id)) }
+  ];
+
+  return {
+    ...sequenceLoadFunctions
+  };
+}
+
+const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent)
+
+function Kids({ kids }) {
+  return (
+    <div>
+      Kids:
+      {kids.map((kid) => (<PersonInfo info={kid} />))}
+    </div>
+  );
+}
+
+function PersonInfo({ info: { name, age } }) {
+  return {
+    <div>
+      <span>name: {name}</span>
+      <span>age: {age}</span>
+    </div>
+  }
+}
+
+```
+
+Sequenced function handlers are called with the results from all previous functions in case your inputs need to be derived from more than one previous call.
+
+```javascript
+const sequenceLoadFunctions = sequence[
+  { key: 'first', handler: () => dispatch(loadFirst()) },
+  { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
+  { key: 'third', handler: ({ first, second }) => dispatch(loadThird(first.someParam, second.anotherParam)) }
+];
+```
+
+If you need to make two calls in parallel before you make a third, you can use a combination of `iguazuReduce` and `sequence` to accomplish your goal.
+
+```javascript
+const sequenceLoadFunctions = sequence[
+  {
+    key: 'first',
+    handler: iguazuReduce(() => ({
+      firstA: () => dispatch(loadFirstA()),
+      firstB: () => dispatch(loadFirstB())
+    }))
+  },
+  {
+    key: 'second', handler: ({ first: { firstA, firstB } }) => dispatch(loadSecond(firstA, firstB))
+  }
+];
+```
+
 ## Why is it called Iguazu?
 This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
 
