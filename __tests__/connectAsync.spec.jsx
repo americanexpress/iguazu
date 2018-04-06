@@ -6,6 +6,7 @@ import asyncBootstrapper from 'react-async-bootstrapper';
 import thunk from 'redux-thunk';
 
 import { enableSSR, resetSSR } from '../src/ssr';
+import * as utils from '../src/utils';
 
 // Module under test
 import connectAsync from '../src/connectAsync';
@@ -120,6 +121,16 @@ describe('connectAsync', () => {
     expect(loadDataAsProps).toHaveBeenCalledTimes(1);
   });
 
+  it('should catch promises during normal render cycle to avoid unhandledrejection', () => {
+    const spy = jest.spyOn(utils, 'handlePromiseRejection');
+    const promise = Promise.reject('failed to load data');
+    const mockloadDataAsProps = () => ({ myAsyncData: () => ({ promise }) });
+    const MockComponent = () => null;
+    const MockContainer = connectAsync({ loadDataAsProps: mockloadDataAsProps })(MockComponent);
+    mount(<MockContainer />, { context: { store } });
+    expect(spy).toHaveBeenCalledWith(promise);
+  });
+
   it('should hoist non react statics', () => {
     const Inner = () => null;
     Inner.someStatic = 'someStatic';
@@ -196,7 +207,7 @@ describe('connectAsync', () => {
     });
 
     describe('props of interest provided', () => {
-      it('should return true when any of the async props of intereset had an error while loading', () => {
+      it('should return true when any of the async props of interest had an error while loading', () => {
         const wrapper = mount(<Container />, { context: { store } });
         wrapper.setState({ errors: { a: loadError } });
         expect(wrapper.instance().loadedWithErrors(['a'])).toBe(true);

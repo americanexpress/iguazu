@@ -8,10 +8,11 @@ import mapValues from 'lodash/mapValues';
 
 import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
 import { isSSR } from './ssr';
+import { handlePromiseRejection } from './utils';
 
 export default function connectAsync({ loadDataAsProps }) {
   const ssrEnabled = loadDataAsProps.ssr;
-  function buildState({ store, ownProps }) {
+  function buildState({ store, ownProps, bootstrap }) {
     const propFuncs = loadDataAsProps({ store, ownProps });
     const ssr = isSSR();
 
@@ -21,6 +22,18 @@ export default function connectAsync({ loadDataAsProps }) {
     } else {
       propResultMap = mapValues(propFuncs, value => value({ ssr }));
     }
+
+    const promise = reducePromise(propResultMap);
+    if (bootstrap) {
+      return promise;
+    }
+
+    /*
+     * The promise is only used during SSR. During the normal render cycle, it is not as important,
+     * as everything is driven by state changes. If the promises are ignored, it could lead to an
+     * unhandledrejection event, so we catch here to avoid that.
+    */
+    handlePromiseRejection(promise);
 
     return {
       data: reduceData(propResultMap),
@@ -94,7 +107,7 @@ export default function connectAsync({ loadDataAsProps }) {
       asyncBootstrap() {
         if (!ssrEnabled) return false;
 
-        return reducePromise(buildState({ store: this.context.store, ownProps: this.props }))
+        return buildState({ store: this.context.store, ownProps: this.props, bootstrap: true })
           .then(() => true);
       }
 
