@@ -242,10 +242,10 @@ function Parent({ isLoading, parent, kids }) {
 }
 
 function parentLoadDataAsProps({ store: { dispatch } }) {
-  const sequenceLoadFunctions = sequence[
+  const sequenceLoadFunctions = sequence([
     { key: 'parent', handler: () => dispatch(loadLoggedInParent()) },
     { key: 'kids', handler: ({ parent }) => dispatch(loadKidsByParent(parent.id)) }
-  ];
+  ]);
 
   return {
     ...sequenceLoadFunctions
@@ -277,17 +277,17 @@ function PersonInfo({ info: { name, age } }) {
 Sequenced function handlers are called with the results from all previous functions in case your inputs need to be derived from more than one previous call.
 
 ```javascript
-const sequenceLoadFunctions = sequence[
+const sequenceLoadFunctions = sequence([
   { key: 'first', handler: () => dispatch(loadFirst()) },
   { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
   { key: 'third', handler: ({ first, second }) => dispatch(loadThird(first.someParam, second.anotherParam)) }
-];
+]);
 ```
 
 If you need to make two calls in parallel before you make a third, you can use a combination of `iguazuReduce` and `sequence` to accomplish your goal.
 
 ```javascript
-const sequenceLoadFunctions = sequence[
+const sequenceLoadFunctions = sequence([
   {
     key: 'first',
     handler: iguazuReduce(() => ({
@@ -298,7 +298,7 @@ const sequenceLoadFunctions = sequence[
   {
     key: 'second', handler: ({ first: { firstA, firstB } }) => dispatch(loadSecond(firstA, firstB))
   }
-];
+]);
 ```
 
 ## Why is it called Iguazu?

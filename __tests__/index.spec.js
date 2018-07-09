@@ -3,6 +3,7 @@ import {
   iguazuReduce,
   defer,
   noncritical,
+  sequence,
   enableSSR,
 } from '../src/index';
 
@@ -12,6 +13,7 @@ describe('Public API', () => {
     expect(iguazuReduce).toBeDefined();
     expect(defer).toBeDefined();
     expect(noncritical).toBeDefined();
+    expect(sequence).toBeDefined();
     expect(enableSSR).toBeDefined();
   });
 });
