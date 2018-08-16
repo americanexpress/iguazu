@@ -23,7 +23,7 @@ Example:
 import React from 'react';
 import { connectAsync } from 'iguazu';
 
-function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) => {
+function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) {
   if (isLoading()) {
     return <div>Loading...</div>
   }
