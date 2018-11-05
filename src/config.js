@@ -14,18 +14,12 @@
  * permissions and limitations under the License.
  */
 
-import connectAsync from './connectAsync';
-import iguazuReduce from './reduce';
-import { enableSSR } from './ssr';
-import { defer, noncritical, sequence } from './loadHelpers';
-import { configureIguazu } from './config';
-
-export {
-  connectAsync,
-  iguazuReduce,
-  defer,
-  noncritical,
-  sequence,
-  enableSSR,
-  configureIguazu,
+const config = {
+  stateChangeLimiter: onStateChange => onStateChange,
 };
+
+export function configureIguazu(customConfig) {
+  Object.assign(config, customConfig);
+}
+
+export default config;

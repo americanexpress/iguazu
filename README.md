@@ -301,6 +301,53 @@ const sequenceLoadFunctions = sequence([
 ]);
 ```
 
+### Limiting
+
+As some functions called within `loadDataAsProps` can be expensive when ran on every Redux state change, you are able to declare a limiter function when calling `connectAsync`. Calls to `loadDataAsProps` are not limited by default.
+
+```javascript
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => dispatch(expensiveQueryToData(ownProps.someParam)),
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+  }
+}
+
+export default connectAsync({
+  loadDataAsProps,
+  stateChangeLimiter: onStateChange => debounce(onStateChange, 100),
+})(MyContainer);
+```
+
+
+## Global Configuration
+
+Iguazu is also capable of consuming global configuration that will be applied to all instances of `connectAsync`. These options will be applied unless otherwise overridden by providing the equivalent setting in the `connectAsync` call.
+
+```javascript
+import { configureIguazu } from 'iguazu';
+
+configureIguazu({
+  stateChangeLimiter: onStateChange => debounce(onStateChange, 100), // applied globally.
+});
+
+...
+
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => dispatch(expensiveQueryToData(ownProps.someParam)),
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+  }
+}
+
+export default connectAsync({
+  loadDataAsProps,
+  stateChangeLimiter: onStateChange => debounce(onStateChange, 500), // override global setting.
+})(MyContainer);
+```
+
 ## Why is it called Iguazu?
 This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
 

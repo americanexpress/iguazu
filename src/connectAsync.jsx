@@ -25,8 +25,12 @@ import mapValues from 'lodash/mapValues';
 import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
 import { isSSR } from './ssr';
 import { handlePromiseRejection } from './utils';
+import config from './config';
 
-export default function connectAsync({ loadDataAsProps }) {
+export default function connectAsync({
+  loadDataAsProps,
+  stateChangeLimiter: localStateChangeLimiter,
+}) {
   const ssrEnabled = loadDataAsProps.ssr;
   function buildState({ store, ownProps, bootstrap }) {
     const propFuncs = loadDataAsProps({ store, ownProps });
@@ -73,8 +77,11 @@ export default function connectAsync({ loadDataAsProps }) {
       componentDidMount() {
         this.mounted = true;
         const { store } = this.context;
+        const { stateChangeLimiter: globalStateChangeLimiter } = config;
+        const stateChangeLimiter = localStateChangeLimiter || globalStateChangeLimiter;
+        const onReduxStateChangeLimited = stateChangeLimiter(this.onReduxStateChange);
         this.unsubscribe = store.subscribe(
-          () => (this.mounted && this.onReduxStateChange())
+          () => (this.mounted && onReduxStateChangeLimited())
         );
       }
 

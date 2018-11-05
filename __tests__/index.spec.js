@@ -21,6 +21,7 @@ import {
   noncritical,
   sequence,
   enableSSR,
+  configureIguazu,
 } from '../src/index';
 
 describe('Public API', () => {
@@ -31,5 +32,6 @@ describe('Public API', () => {
     expect(noncritical).toBeDefined();
     expect(sequence).toBeDefined();
     expect(enableSSR).toBeDefined();
+    expect(configureIguazu).toBeDefined();
   });
 });

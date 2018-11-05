@@ -23,9 +23,14 @@ import thunk from 'redux-thunk';
 
 import { enableSSR, resetSSR } from '../src/ssr';
 import * as utils from '../src/utils';
+import config from '../src/config';
 
 // Module under test
 import connectAsync from '../src/connectAsync';
+
+jest.mock('../src/config', () => ({
+  stateChangeLimiter: jest.fn(func => func),
+}));
 
 describe('connectAsync', () => {
   function reducer(state = { param: 'x', x: 'populated data' }, action) {
@@ -161,6 +166,27 @@ describe('connectAsync', () => {
     expect(connectAsync({ loadDataAsProps })(Implied).displayName).toBe('connectAsync(Implied)');
     expect(connectAsync({ loadDataAsProps })(X).displayName).toBe('connectAsync(Explicit)');
     expect(connectAsync({ loadDataAsProps })(() => null).displayName).toBe('connectAsync(Component)');
+  });
+
+  describe('stateChangeLimiter', () => {
+    it('applies a globally provided limiter on redux state change', () => {
+      const ContainerLimited = connectAsync({
+        loadDataAsProps,
+      })(Presentation);
+      const wrapper = mount(<ContainerLimited />, { context: { store } });
+      const instance = wrapper.instance();
+      expect(config.stateChangeLimiter).toHaveBeenCalledWith(instance.onReduxStateChange);
+    });
+    it('applies a locally provided limiter on redux state change', () => {
+      const localStateChangeLimiter = jest.fn(func => func);
+      const ContainerLimited = connectAsync({
+        loadDataAsProps,
+        stateChangeLimiter: localStateChangeLimiter,
+      })(Presentation);
+      const wrapper = mount(<ContainerLimited />, { context: { store } });
+      const instance = wrapper.instance();
+      expect(localStateChangeLimiter).toHaveBeenCalledWith(instance.onReduxStateChange);
+    });
   });
 
   describe('isLoading', () => {
