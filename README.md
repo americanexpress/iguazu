@@ -23,7 +23,7 @@ Example:
 import React from 'react';
 import { connectAsync } from 'iguazu';
 
-function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) => {
+function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) {
   if (isLoading()) {
     return <div>Loading...</div>
   }
@@ -367,5 +367,5 @@ Any contributions made under this project will be governed by the [Apache Licens
 2.0](https://github.com/americanexpress/iguazu/blob/master/LICENSE.txt).
 
 ## Code of Conduct
-This project adheres to the [American Express Community Guidelines](https://github.com/americanexpress/iguazu/blob/master/Code-of-Conduct).
+This project adheres to the [American Express Community Guidelines](./CODE_OF_CONDUCT.md).
 By participating, you are expected to honor these guidelines.
