@@ -57,15 +57,12 @@ export function sequence(funcs) {
         const { promise: prevPromise, status, error, data } = result;
         sequencedData = { [prevKey]: data, ...sequencedData };
 
-        let promise;
-        if (isSSR()) {
-          promise = prevPromise
-            .then((prevData) => {
-              const prevDataMap = currIndex === 1 ? { [prevKey]: prevData } : prevData;
-              return Promise.all([prevDataMap, handler(prevDataMap).promise]);
-            })
-            .then(([prevDataMap, currData]) => ({ ...prevDataMap, [key]: currData }));
-        }
+        const promise = prevPromise
+          .then((prevData) => {
+            const prevDataMap = currIndex === 1 ? { [prevKey]: prevData } : prevData;
+            return Promise.all([prevDataMap, handler(prevDataMap).promise]);
+          })
+          .then(([prevDataMap, currData]) => ({ ...prevDataMap, [key]: currData }));
 
         if (status === 'loading') {
           return { status: 'loading', promise };
