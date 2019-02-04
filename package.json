@@ -17,26 +17,28 @@
     "posttest": "npm run lint"
   },
   "jest": {
-    "preset": "amex-jest-preset-react"
+    "preset": "amex-jest-preset-react",
+    "setupFiles": [
+      "./test-setup.js"
+    ]
   },
   "dependencies": {
+    "@babel/polyfill": "^7.2.5",
     "hoist-non-react-statics": "^1.2.0",
     "lodash": "^4.17.4",
     "prop-types": "^15.5.10",
     "shallowequal": "^1.0.1"
   },
   "devDependencies": {
-    "amex-jest-preset-react": "^4.0.0-0",
-    "babel-cli": "^6.24.1",
-    "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
-    "babel-preset-env": "^1.5.1",
-    "babel-preset-react": "^6.24.1",
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "amex-jest-preset-react": "^5.0.1",
+    "babel-preset-amex": "^2.0.0",
     "enzyme": "^3.1.1",
     "enzyme-to-json": "^3.2.1",
     "eslint": "^3.19.0",
     "eslint-config-amex": "^6.0.0",
-    "jest": "^21.2.1",
+    "jest": "^24.1.0",
     "react": "^16.0.0",
     "react-async-bootstrapper": "^1.1.1",
     "react-dom": "^16.0.0",
