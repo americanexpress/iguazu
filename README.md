@@ -319,6 +319,67 @@ export default connectAsync({
 })(MyContainer);
 ```
 
+### Fetching On User Action
+
+In the case that `loadDataAsProps` needs to be called on a user action, the initial render can be controlled by the result of the expected user input.
+
+```javascript
+/* ComponentA.jsx */
+import React, { Component, Fragment } from 'react';
+import ComponentB from './ComponentB';
+
+export default class ComponentA extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { buttonClicked: false };
+  }
+
+  handleClick = () => this.setState({ buttonClicked: true });
+
+  render() {
+    const { buttonClicked } = this.state;
+    return (
+      <Fragment>
+        <button onClick={this.handleClick}>Click to Load</button>
+        {
+          buttonClicked && <ComponentB />
+        }
+      </Fragment>
+    )
+  }
+};
+
+/* ComponentB.jsx */
+import React from 'react';
+import { connectAsync } from 'iguazu';
+
+function ComponentB({ isLoading, loadedWithErrors, myData, myOtherData }) {
+  if (isLoading()) {
+    return <div>Loading...</div>
+  }
+
+  if (loadedWithErrors()) {
+    return <div>Oh no! Something went wrong</div>
+  }
+
+  return <div>myData = {myData} myOtherData = {myOtherData}</div>
+};
+
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => {
+      if (!ownProps.someParam) {
+        return { status: 'complete', promise: Promise.resolve() }; // data & error should be undefined.
+      }
+      return dispatch(queryMyData(ownProps.someParam));
+    },
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+  }
+};
+
+export default connectAsync({ loadDataAsProps })(ComponentB);
+```
 
 ## Global Configuration
 
