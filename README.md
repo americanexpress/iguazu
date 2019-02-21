@@ -142,7 +142,6 @@ function MyComponent({ isLoading }) {
 }
 
 function loadDataAsProps({ store, ownProps }) {
-  const componentA
   return {
     ComponentA: () => iguazuReduce(ComponentA.loadDataAsProps)({
       store, ownProps: { someParam: 'someParam' }
