@@ -15,6 +15,7 @@
  */
 
 import mapValues from 'lodash/mapValues';
+import values from 'lodash/values';
 
 import { enableSSR, resetSSR } from '../src/ssr';
 import iguazuReduce from '../src/reduce';
@@ -169,6 +170,24 @@ describe('', () => {
       }]);
 
       mapValues(sequenceFuncs, value => value());
+      expect(seq2).toHaveBeenCalledWith({ seq1: { seq1A: 'seq1A data', seq1B: 'seq1B data' } });
+    });
+
+    it('should work with iguazuReduce options and return promise as an object', async () => {
+      const seq2 = jest.fn(() => ({ status: 'loading' }));
+      const sequenceFuncs = sequence([{
+        key: 'seq1',
+        handler: iguazuReduce(() => ({
+          seq1A: () => ({ status: 'loading', promise: Promise.resolve('seq1A data') }),
+          seq1B: () => ({ status: 'complete', promise: Promise.resolve('seq1B data') }),
+        }), { promiseAsObject: true }),
+      }, {
+        key: 'seq2', handler: seq2,
+      }]);
+
+      const seqValues = mapValues(sequenceFuncs, value => value());
+      const seqPromises = values(seqValues).map(({ promise }) => promise);
+      await Promise.all(seqPromises);
       expect(seq2).toHaveBeenCalledWith({ seq1: { seq1A: 'seq1A data', seq1B: 'seq1B data' } });
     });
   });

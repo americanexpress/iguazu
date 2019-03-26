@@ -20,6 +20,7 @@ import iguazuReduce, {
   reduceData,
   reduceStatus,
   reducePromise,
+  reducePromiseObject,
   reduceErrors,
 } from '../src/reduce';
 
@@ -86,6 +87,27 @@ describe('reducers', () => {
     });
   });
 
+  describe('reducePromiseObject', () => {
+    it('should return response object of the promises wrapped in Promise.all', async () => {
+      const loadResponseMap = {
+        x: { promise: Promise.resolve('x result') },
+        y: { promise: Promise.resolve('y result') },
+      };
+      const promiseResults = await reducePromiseObject(loadResponseMap);
+      expect(promiseResults).toEqual({ x: 'x result', y: 'y result' });
+    });
+
+    it('should work with \'unreliable\' keys', async () => {
+      const loadResponseMap = {
+        500: { promise: Promise.resolve('x result') },
+        7: { promise: Promise.resolve('y result') },
+        15: { promise: Promise.resolve('z result') },
+      };
+      const promiseResults = await reducePromiseObject(loadResponseMap);
+      expect(promiseResults).toEqual({ 500: 'x result', 7: 'y result', 15: 'z result' });
+    });
+  });
+
   describe('iguazuReduce', () => {
     afterEach(() => {
       resetSSR();
@@ -104,6 +126,21 @@ describe('reducers', () => {
       expect(reducedLoadResponse.status).toBe('loading');
       const promiseResults = await reducedLoadResponse.promise;
       expect(promiseResults).toEqual(['x result', 'y result']);
+    });
+
+    it('should return promise as object if \'promiseAsObject\' option supplied', async () => {
+      const loadDataAsProps = () => ({
+        x: () => ({ data: 'x data', status: 'complete', promise: Promise.resolve('x result') }),
+        y: () => ({ data: 'y data', status: 'loading', promise: Promise.resolve('y result') }),
+      });
+      const reducedLoadResponse = iguazuReduce(loadDataAsProps, { promiseAsObject: true })();
+      expect(reducedLoadResponse.data).toEqual({
+        x: 'x data',
+        y: 'y data',
+      });
+      expect(reducedLoadResponse.status).toBe('loading');
+      const promiseResults = await reducedLoadResponse.promise;
+      expect(promiseResults).toEqual({ x: 'x result', y: 'y result' });
     });
 
     it('should not execute the load function on server if the load function is not ssr enabled', () => {

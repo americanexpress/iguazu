@@ -16,6 +16,7 @@
 
 import values from 'lodash/values';
 import mapValues from 'lodash/mapValues';
+import zipObject from 'lodash/zipObject';
 
 import { isSSR } from './ssr';
 
@@ -53,7 +54,15 @@ export function reducePromise(loadResponseMap) {
   return Promise.all(values(loadResponseMap).map(response => response.promise));
 }
 
-export default function iguazuReduce(loadFunc) {
+export function reducePromiseObject(loadResponseMap) {
+  const keys = Object.keys(loadResponseMap);
+  const promises = keys.map(key => loadResponseMap[key].promise);
+
+  return Promise.all(promises)
+    .then(responses => zipObject(keys, responses));
+}
+
+export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {}) {
   return (loadInputs) => {
     const ssr = isSSR();
     if (ssr && !loadFunc.ssr) { return { status: 'loading' }; }
@@ -64,7 +73,10 @@ export default function iguazuReduce(loadFunc) {
     const data = reduceData(loadResponseMap);
     const status = reduceStatus(loadResponseMap).all;
     const error = reduceErrors(loadResponseMap).any;
-    const promise = reducePromise(loadResponseMap);
+    // TODO: Fix this to always return as object in next major version.
+    const promise = promiseAsObject
+      ? reducePromiseObject(loadResponseMap)
+      : reducePromise(loadResponseMap);
 
     return {
       data,

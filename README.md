@@ -411,6 +411,19 @@ export default connectAsync({
 })(MyContainer);
 ```
 
+## Known Issues
+
+- Using `iguazuReduce` within a `sequence` returns the response to the next handler as an array if the data is not loaded. Pass in `promiseAsObject` to `iguazuReduce` to resolve until next major version.
+
+```javascript
+const sequenceLoadFunctions = sequence([
+  { key: 'first', handler: () => iguazuReduce(ComponentA.loadDataAsProps, { promiseAsObject: true })({
+    store, ownProps: { someParam: 'someParam' }
+  }) },
+  { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
+]);
+```
+
 ## Why is it called Iguazu?
 This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
 
