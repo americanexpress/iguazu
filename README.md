@@ -2,6 +2,9 @@
 
 An asynchronous data flow solution for React/Redux applications.
 
+> Want to get paid for your contributions to `iguazu`?
+> Send your resume to oneamex.careers@aexp.com
+
 ## Motivation
 [react-redux](https://github.com/reduxjs/react-redux) works great for when you want to take data that already exists in state and inject it as props into a React component, but it doesn't help you at all with the flow of loading asynchronous data into state. If a react component relies on asynchronous data you typically have to do three things:
 
