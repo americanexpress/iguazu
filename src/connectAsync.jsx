@@ -138,12 +138,12 @@ export default function connectAsync({
         const { data, status, errors } = this.state;
         return (
           <WrappedComponent
+            {...this.props}
             loadStatus={status}
             isLoading={this.isLoading}
             loadErrors={errors}
             loadedWithErrors={this.loadedWithErrors}
             {...data}
-            {...this.props}
           />
         );
       }

@@ -95,6 +95,44 @@ describe('connectAsync', () => {
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
   });
 
+  it('reduced data should not be overridden by local props', () => {
+    const localAsyncData = '';
+    const props = mount(<Container
+      myAsyncData={localAsyncData}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.myAsyncData).toEqual('populated data');
+    expect(props.myAsyncData).not.toBe(localAsyncData);
+  });
+
+  it('loadStatus should not be overridden by local props', () => {
+    const localLoadStatus = {};
+    const props = mount(<Container
+      loadStatus={localLoadStatus}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
+    expect(props.loadStatus).not.toBe(localLoadStatus);
+  });
+
+  it('should pass reduced data and load errors as props', () => {
+    const error = new Error('load error');
+    myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
+    const props = mount(<Container />, { context: { store } }).find(Presentation).props();
+    expect(props.myAsyncData).toEqual(error);
+    expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
+    expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadErrors should not be overridden by local props', () => {
+    const localLoadErrors = {};
+    const error = new Error('load error');
+    myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
+    const props = mount(<Container
+      loadErrors={localLoadErrors}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
+    expect(props.loadStatus).not.toBe(localLoadErrors);
+  });
+
   it('should update data and load status when parent props change', () => {
     const wrapper = mount(<Container />, { context: { store } });
     let props = wrapper.find(Presentation).props();
@@ -196,6 +234,14 @@ describe('connectAsync', () => {
       expect(props.isLoading).toBe(wrapper.instance().isLoading);
     });
 
+    it('should not be overridden by local props', () => {
+      const localIsLoading = jest.fn();
+      const wrapper = mount(<Container isLoading={localIsLoading} />, { context: { store } });
+      const props = wrapper.find(Presentation).props();
+      expect(props.isLoading).toBe(wrapper.instance().isLoading);
+      expect(props.isLoading).not.toBe(localIsLoading);
+    });
+
     describe('no props of interest provided', () => {
       it('should return true when any of the async props are in the middle of loading', () => {
         const wrapper = mount(<Container />, { context: { store } });
@@ -232,6 +278,16 @@ describe('connectAsync', () => {
       const wrapper = mount(<Container />, { context: { store } });
       const props = wrapper.find(Presentation).props();
       expect(props.loadedWithErrors).toBe(wrapper.instance().loadedWithErrors);
+    });
+
+    it('should not be overridden by local props', () => {
+      const localLoadedWithErrors = jest.fn();
+      const wrapper = mount(<Container
+        loadedWithErrors={localLoadedWithErrors}
+      />, { context: { store } });
+      const props = wrapper.find(Presentation).props();
+      expect(props.loadedWithErrors).toBe(wrapper.instance().loadedWithErrors);
+      expect(props.loadedWithErrors).not.toBe(localLoadedWithErrors);
     });
 
     describe('no props of interest provided', () => {
