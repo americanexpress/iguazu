@@ -14,6 +14,8 @@
  * permissions and limitations under the License.
  */
 
+import shallowequal from 'shallowequal';
+
 import config, {
   configureIguazu,
 } from '../src/config';
@@ -22,6 +24,12 @@ describe('config', () => {
   describe('default config', () => {
     it('should be initialized with some defaults', () => {
       expect(config.stateChangeLimiter).toBeInstanceOf(Function);
+    });
+
+    describe('stateChangeComparator', () => {
+      it('should return shallow equal', () => {
+        expect(config.stateChangeComparator).toBe(shallowequal);
+      });
     });
 
     describe('stateChangeLimiter', () => {

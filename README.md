@@ -303,6 +303,29 @@ const sequenceLoadFunctions = sequence([
 ]);
 ```
 
+### Updating
+
+Iguazu processes updates on Redux state changes by comparing the previous and next responses from `loadDataAsProps` using
+[shallowequal](https://www.npmjs.com/package/shallowequal) by default. You are able to declare a comparator function when
+calling `connectAsync` to manage how the previous and next responses from `loadDataAsProps` are compared.
+
+```javascript
+import { deepEqual } from 'fast-equals';
+
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => dispatch(queryToDeeplyNestedData(ownProps.someParam)),
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+  }
+}
+
+export default connectAsync({
+  loadDataAsProps,
+  stateChangeComparator: deepEqual,
+})(MyContainer);
+```
+
 ### Limiting
 
 As some functions called within `loadDataAsProps` can be expensive when ran on every Redux state change, you are able to declare a limiter function when calling `connectAsync`. Calls to `loadDataAsProps` are not limited by default.
@@ -389,9 +412,11 @@ export default connectAsync({ loadDataAsProps })(ComponentB);
 Iguazu is also capable of consuming global configuration that will be applied to all instances of `connectAsync`. These options will be applied unless otherwise overridden by providing the equivalent setting in the `connectAsync` call.
 
 ```javascript
+import { shallowEqual, deepEqual } from 'fast-equals';
 import { configureIguazu } from 'iguazu';
 
 configureIguazu({
+  stateChangeComparator: shallowEqual, // applied globally.
   stateChangeLimiter: onStateChange => debounce(onStateChange, 100), // applied globally.
 });
 
@@ -400,13 +425,14 @@ configureIguazu({
 function loadDataAsProps({ store, ownProps }) {
   const { dispatch, getState } = store;
   return {
-    myData: () => dispatch(expensiveQueryToData(ownProps.someParam)),
-    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
+    myData: () => dispatch(queryToDeeplyNestedData(ownProps.someParam)),,
+    myOtherData: () => dispatch(expensiveQueryToData(ownProps.someParam))
   }
 }
 
 export default connectAsync({
   loadDataAsProps,
+  stateChangeComparator: deepEqual, // override global setting.
   stateChangeLimiter: onStateChange => debounce(onStateChange, 500), // override global setting.
 })(MyContainer);
 ```

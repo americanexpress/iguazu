@@ -13,8 +13,10 @@
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+import shallowequal from 'shallowequal';
 
 const config = {
+  stateChangeComparator: shallowequal,
   stateChangeLimiter: onStateChange => onStateChange,
 };
 

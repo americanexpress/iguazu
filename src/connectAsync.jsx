@@ -30,6 +30,7 @@ import config from './config';
 export default function connectAsync({
   loadDataAsProps,
   stateChangeLimiter: localStateChangeLimiter,
+  stateChangeComparator: localStateChangeComparator,
 }) {
   const ssrEnabled = loadDataAsProps.ssr;
   function buildState({ store, ownProps, bootstrap }) {
@@ -103,9 +104,11 @@ export default function connectAsync({
       }
 
       setStateIfNecessary(newState) {
-        const dataIsEqual = shallowequal(this.state.data, newState.data);
-        const statusIsEqual = shallowequal(this.state.status, newState.status);
-        const errorsAreEqual = shallowequal(this.state.errors, newState.errors);
+        const { stateChangeComparator: globalStateChangeComparator } = config;
+        const stateChangeComparator = localStateChangeComparator || globalStateChangeComparator;
+        const dataIsEqual = stateChangeComparator(this.state.data, newState.data);
+        const statusIsEqual = stateChangeComparator(this.state.status, newState.status);
+        const errorsAreEqual = stateChangeComparator(this.state.errors, newState.errors);
         if (!dataIsEqual || !statusIsEqual || !errorsAreEqual) {
           this.setState(newState);
         }

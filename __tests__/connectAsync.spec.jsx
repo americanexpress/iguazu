@@ -29,6 +29,7 @@ import config from '../src/config';
 import connectAsync from '../src/connectAsync';
 
 jest.mock('../src/config', () => ({
+  stateChangeComparator: jest.fn(require('shallowequal')),
   stateChangeLimiter: jest.fn(func => func),
 }));
 
@@ -204,6 +205,47 @@ describe('connectAsync', () => {
     expect(connectAsync({ loadDataAsProps })(Implied).displayName).toBe('connectAsync(Implied)');
     expect(connectAsync({ loadDataAsProps })(X).displayName).toBe('connectAsync(Explicit)');
     expect(connectAsync({ loadDataAsProps })(() => null).displayName).toBe('connectAsync(Component)');
+  });
+
+  describe('stateChangeComparator', () => {
+    it('applies a globally provided comparator when parent props change', () => {
+      const ContainerComparator = connectAsync({
+        loadDataAsProps,
+      })(Presentation);
+      const wrapper = mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      wrapper.setProps({ irrelevant: 'new' });
+      expect(config.stateChangeComparator).toHaveBeenCalledTimes(3);
+    });
+    it('applies a locally provided comparator when parent props change', () => {
+      const localStateChangeLimiter = jest.fn(() => true);
+      const ContainerComparator = connectAsync({
+        loadDataAsProps,
+        stateChangeComparator: localStateChangeLimiter,
+      })(Presentation);
+      const wrapper = mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      wrapper.setProps({ irrelevant: 'new' });
+      expect(config.stateChangeComparator).not.toHaveBeenCalled();
+      expect(localStateChangeLimiter).toHaveBeenCalledTimes(3);
+    });
+    it('applies a globally provided comparator when the store has updated', () => {
+      const ContainerComparator = connectAsync({
+        loadDataAsProps,
+      })(Presentation);
+      mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      store.dispatch({ type: 'UPDATE_PARAM', param: 'y' });
+      expect(config.stateChangeComparator).toHaveBeenCalledTimes(3);
+    });
+    it('applies a locally provided comparator when the store has updated', () => {
+      const localStateChangeLimiter = jest.fn(() => true);
+      const ContainerComparator = connectAsync({
+        loadDataAsProps,
+        stateChangeComparator: localStateChangeLimiter,
+      })(Presentation);
+      mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      store.dispatch({ type: 'UPDATE_PARAM', param: 'y' });
+      expect(config.stateChangeComparator).not.toHaveBeenCalled();
+      expect(localStateChangeLimiter).toHaveBeenCalledTimes(3);
+    });
   });
 
   describe('stateChangeLimiter', () => {
