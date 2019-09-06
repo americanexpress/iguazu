@@ -96,15 +96,6 @@ describe('connectAsync', () => {
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
   });
 
-  it('reduced data should not be overridden by local props', () => {
-    const localAsyncData = '';
-    const props = mount(<Container
-      myAsyncData={localAsyncData}
-    />, { context: { store } }).find(Presentation).props();
-    expect(props.myAsyncData).toEqual('populated data');
-    expect(props.myAsyncData).not.toBe(localAsyncData);
-  });
-
   it('loadStatus should not be overridden by local props', () => {
     const localLoadStatus = {};
     const props = mount(<Container
@@ -112,15 +103,6 @@ describe('connectAsync', () => {
     />, { context: { store } }).find(Presentation).props();
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
     expect(props.loadStatus).not.toBe(localLoadStatus);
-  });
-
-  it('should pass reduced data and load errors as props', () => {
-    const error = new Error('load error');
-    myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
-    const props = mount(<Container />, { context: { store } }).find(Presentation).props();
-    expect(props.myAsyncData).toEqual(error);
-    expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
-    expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
   });
 
   it('loadErrors should not be overridden by local props', () => {
@@ -131,7 +113,44 @@ describe('connectAsync', () => {
       loadErrors={localLoadErrors}
     />, { context: { store } }).find(Presentation).props();
     expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
-    expect(props.loadStatus).not.toBe(localLoadErrors);
+    expect(props.loadErrors).not.toBe(localLoadErrors);
+  });
+
+  it('isLoading should not be overriden by local props', () => {
+    const localIsLoading = {};
+    const props = mount(<Container
+      isLoading={localIsLoading}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.isLoading).toBeInstanceOf(Function);
+    expect(props.isLoading).not.toBe(localIsLoading);
+  });
+
+  it('loadedWithErrors should not be overriden by local props', () => {
+    const localLoadedWithErrors = {};
+    const props = mount(<Container
+      loadedWithErrors={localLoadedWithErrors}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.loadedWithErrors).toBeInstanceOf(Function);
+    expect(props.loadedWithErrors).not.toBe(localLoadedWithErrors);
+  });
+
+  it('reduced data can be overridden by local props', () => {
+    const localAsyncData = 'local async data';
+    const props = mount(<Container
+      myAsyncData={localAsyncData}
+    />, { context: { store } }).find(Presentation).props();
+    expect(props.myAsyncData).toEqual(localAsyncData);
+    expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
+    expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass reduced data and load errors as props', () => {
+    const error = new Error('load error');
+    myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
+    const props = mount(<Container />, { context: { store } }).find(Presentation).props();
+    expect(props.myAsyncData).toEqual(error);
+    expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
+    expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
   });
 
   it('should update data and load status when parent props change', () => {
