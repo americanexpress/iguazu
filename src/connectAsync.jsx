@@ -65,7 +65,6 @@ export default function connectAsync({
 
   return function wrapWithConnectAsync(WrappedComponent) {
     class ConnectAsync extends React.Component {
-
       constructor(props, context) {
         super(props);
         this.state = buildState({ store: context.store, ownProps: props });

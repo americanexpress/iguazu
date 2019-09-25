@@ -29,6 +29,7 @@ import config from '../src/config';
 import connectAsync from '../src/connectAsync';
 
 jest.mock('../src/config', () => ({
+  // eslint-disable-next-line global-require
   stateChangeComparator: jest.fn(require('shallowequal')),
   stateChangeLimiter: jest.fn(func => func),
 }));
