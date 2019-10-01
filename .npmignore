@@ -1,1 +1,11 @@
 test-results
+src
+__tests__
+*.md
+CODEOWNERS
+.travis.yml
+.babelrc
+.eslintrc.json
+*.tgz
+test-setup.js
+.jest-cache
