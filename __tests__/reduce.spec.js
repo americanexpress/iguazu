@@ -125,7 +125,7 @@ describe('reducers', () => {
       });
       expect(reducedLoadResponse.status).toBe('loading');
       const promiseResults = await reducedLoadResponse.promise;
-      expect(promiseResults).toEqual(['x result', 'y result']);
+      expect(promiseResults).toEqual(expect.arrayContaining(['x result', 'y result']));
     });
 
     it('should return promise as object if \'promiseAsObject\' option supplied', async () => {

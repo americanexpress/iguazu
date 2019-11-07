@@ -1,0 +1,24 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils mapValues should decorate values of object with exclamation 1`] = `
+Object {
+  "one": "!1",
+  "three": "!3",
+  "two": "!2",
+}
+`;
+
+exports[`utils pick should select a subset of an object 1`] = `
+Object {
+  "one": 1,
+  "two": 2,
+}
+`;
+
+exports[`utils zipObject should make an object from two arrays 1`] = `
+Object {
+  "one": 1,
+  "three": 3,
+  "two": 2,
+}
+`;

@@ -15,16 +15,14 @@
  */
 
 import React from 'react';
+import { ReactReduxContext } from 'react-redux';
 import hoistStatics from 'hoist-non-react-statics';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import pick from 'lodash/pick';
-import values from 'lodash/values';
-import mapValues from 'lodash/mapValues';
 
 import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
 import { isSSR } from './ssr';
-import { handlePromiseRejection } from './utils';
+import { handlePromiseRejection, pick, mapValues } from './utils';
 import config from './config';
 
 export default function connectAsync({
@@ -33,7 +31,7 @@ export default function connectAsync({
   stateChangeComparator: localStateChangeComparator,
 }) {
   const ssrEnabled = loadDataAsProps.ssr;
-  function buildState({ store, ownProps, bootstrap }) {
+  function buildState({ store, ownProps }) {
     const propFuncs = loadDataAsProps({ store, ownProps });
     const ssr = isSSR();
 
@@ -45,9 +43,6 @@ export default function connectAsync({
     }
 
     const promise = reducePromise(propResultMap);
-    if (bootstrap) {
-      return promise;
-    }
 
     /*
      * The promise is only used during SSR. During the normal render cycle, it is not as important,
@@ -65,9 +60,10 @@ export default function connectAsync({
 
   return function wrapWithConnectAsync(WrappedComponent) {
     class ConnectAsync extends React.Component {
-      constructor(props, context) {
+      constructor(props) {
         super(props);
-        this.state = buildState({ store: context.store, ownProps: props });
+        const { reduxStore, ...restOfProps } = props;
+        this.state = buildState({ store: reduxStore, ownProps: restOfProps });
         this.setStateIfNecessary = this.setStateIfNecessary.bind(this);
         this.onReduxStateChange = this.onReduxStateChange.bind(this);
         this.isLoading = this.isLoading.bind(this);
@@ -76,7 +72,7 @@ export default function connectAsync({
 
       componentDidMount() {
         this.mounted = true;
-        const { store } = this.context;
+        const store = this.props.reduxStore;
         const { stateChangeLimiter: globalStateChangeLimiter } = config;
         const stateChangeLimiter = localStateChangeLimiter || globalStateChangeLimiter;
         const onReduxStateChangeLimited = stateChangeLimiter(this.onReduxStateChange);
@@ -85,9 +81,15 @@ export default function connectAsync({
         );
       }
 
-      componentWillReceiveProps(nextProps) {
-        if (!shallowequal(this.props, nextProps)) {
-          this.setStateIfNecessary(buildState({ store: this.context.store, ownProps: nextProps }));
+      // eslint-disable-next-line camelcase
+      UNSAFE_componentWillReceiveProps(nextProps) {
+        const { reduxStore, ...restOfProps } = this.props;
+        const { reduxStore: nextReduxStore, ...nextRestOfProps } = nextProps;
+        if (!shallowequal(restOfProps, nextRestOfProps)) {
+          this.setStateIfNecessary(buildState({
+            store: nextReduxStore,
+            ownProps: nextRestOfProps,
+          }));
         }
       }
 
@@ -97,9 +99,8 @@ export default function connectAsync({
       }
 
       onReduxStateChange() {
-        const { store } = this.context;
-        const ownProps = this.props;
-        this.setStateIfNecessary(buildState({ store, ownProps }));
+        const { reduxStore, ...restOfProps } = this.props;
+        this.setStateIfNecessary(buildState({ store: reduxStore, ownProps: restOfProps }));
       }
 
       setStateIfNecessary(newState) {
@@ -116,7 +117,7 @@ export default function connectAsync({
       isLoading(propsOfInterest) {
         const loadStatusMap = this.state.status;
         const statusesOfInterest =
-          values(propsOfInterest ? pick(loadStatusMap, propsOfInterest) : loadStatusMap);
+          Object.values(propsOfInterest ? pick(loadStatusMap, propsOfInterest) : loadStatusMap);
 
         return statusesOfInterest.some(status => status === 'loading');
       }
@@ -124,24 +125,18 @@ export default function connectAsync({
       loadedWithErrors(propsOfInterest) {
         const loadErrorMap = this.state.errors;
         const errorsOfInterest =
-          values(propsOfInterest ? pick(loadErrorMap, propsOfInterest) : loadErrorMap);
+          Object.values(propsOfInterest ? pick(loadErrorMap, propsOfInterest) : loadErrorMap);
 
         return errorsOfInterest.some(error => error);
       }
 
-      asyncBootstrap() {
-        if (!ssrEnabled) return false;
-
-        return buildState({ store: this.context.store, ownProps: this.props, bootstrap: true })
-          .then(() => true);
-      }
-
       render() {
         const { data, status, errors } = this.state;
+        const { reduxStore, ...restOfProps } = this.props;
         return (
           <WrappedComponent
             {...data}
-            {...this.props}
+            {...restOfProps}
             loadStatus={status}
             isLoading={this.isLoading}
             loadErrors={errors}
@@ -151,19 +146,29 @@ export default function connectAsync({
       }
     }
 
-    ConnectAsync.contextTypes = {
-      store: PropTypes.shape({
+    ConnectAsync.propTypes = {
+      reduxStore: PropTypes.shape({
         subscribe: PropTypes.func.isRequired,
         dispatch: PropTypes.func.isRequired,
         getState: PropTypes.func.isRequired,
-      }),
+      }).isRequired,
     };
-
     hoistStatics(ConnectAsync, WrappedComponent);
     ConnectAsync.loadDataAsProps = loadDataAsProps;
     ConnectAsync.displayName =
       `connectAsync(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
-    return ConnectAsync;
+    function ReduxConsumerWrapper(props) {
+      return (
+        <ReactReduxContext.Consumer>
+          {({ store }) => <ConnectAsync {...props} reduxStore={store} />}
+        </ReactReduxContext.Consumer>
+      );
+    }
+
+    hoistStatics(ReduxConsumerWrapper, ConnectAsync);
+    ReduxConsumerWrapper.displayName = `ReduxConsumerWrapper(${ConnectAsync.displayName})`;
+
+    return ReduxConsumerWrapper;
   };
 }

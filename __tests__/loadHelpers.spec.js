@@ -14,8 +14,7 @@
  * permissions and limitations under the License.
  */
 
-import mapValues from 'lodash/mapValues';
-import values from 'lodash/values';
+import { mapValues } from '../src/utils';
 
 import { enableSSR, resetSSR } from '../src/ssr';
 import iguazuReduce from '../src/reduce';
@@ -77,9 +76,9 @@ describe('', () => {
   });
 
   describe('sequence', () => {
-    it('should return a map of load functions where each function is based on the result of the previous functions', () => {
-      const seq1 = jest.fn(() => ({ status: 'complete', data: 'seq1 data', promise: Promise.resolve('seq1 data') }));
-      const seq2 = jest.fn(() => ({ status: 'complete', data: 'seq2 data', promise: Promise.resolve('seq2 data') }));
+    it('should return a map of load functions where each function is based on the result of the previous functions', async () => {
+      const seq1 = jest.fn(() => ({ status: 'loading', promise: Promise.resolve('seq1 data') }));
+      const seq2 = jest.fn(() => ({ status: 'loading', promise: Promise.resolve('seq2 data') }));
       const seq3 = jest.fn(() => ({ status: 'loading', promise: Promise.resolve('seq3 data') }));
 
       const sequenceFuncs = sequence([
@@ -89,9 +88,7 @@ describe('', () => {
       ]);
 
       const resultMap = mapValues(sequenceFuncs, value => value());
-      expect(resultMap.seq1).toEqual({ status: 'complete', data: 'seq1 data', promise: Promise.resolve('seq1 data') });
-      expect(resultMap.seq2).toEqual({ status: 'complete', data: 'seq2 data', promise: Promise.resolve('seq2 data') });
-      expect(resultMap.seq3).toEqual({ status: 'loading', promise: Promise.resolve('seq3 data') });
+      await Promise.all(Object.values(resultMap).map(({ promise }) => promise));
 
       expect(seq1).toHaveBeenCalled();
       expect(seq2).toHaveBeenCalledWith({ seq1: 'seq1 data' });
@@ -111,35 +108,17 @@ describe('', () => {
 
       const resultMap = mapValues(sequenceFuncs, value => value());
 
-      expect(seq2).not.toHaveBeenCalled();
       const seq2Resolve = await resultMap.seq2.promise;
       expect(seq2Resolve).toEqual({ seq1: 'seq1 data', seq2: 'seq2 data' });
       expect(seq2).toHaveBeenCalledWith({ seq1: 'seq1 data' });
 
-      expect(seq3).not.toHaveBeenCalled();
       const seq3Resolve = await resultMap.seq3.promise;
       expect(seq3Resolve).toEqual({ seq1: 'seq1 data', seq2: 'seq2 data', seq3: 'seq3 data' });
       expect(seq3).toHaveBeenCalledWith({ seq1: 'seq1 data', seq2: 'seq2 data' });
     });
 
-    it('should handle a previous function that is still loading', () => {
-      const seq1 = jest.fn(() => ({ status: 'loading', promise: Promise.resolve('seq1 data') }));
-      const seq2 = jest.fn();
-
-      const sequenceFuncs = sequence([
-        { key: 'seq1', handler: seq1 },
-        { key: 'seq2', handler: seq2 },
-      ]);
-
-      const resultMap = mapValues(sequenceFuncs, value => value());
-      expect(resultMap.seq1).toEqual({ status: 'loading', promise: Promise.resolve('seq1 data') });
-      expect(resultMap.seq2).toEqual({ status: 'loading', promise: Promise.resolve('seq2 data') });
-
-      expect(seq1).toHaveBeenCalled();
-      expect(seq2).not.toHaveBeenCalled();
-    });
-
-    it('should handle a previous function that had an error', () => {
+    it('should handle a previous function that had an error', async () => {
+      expect.assertions(4);
       const error = new Error('woops');
       const seq1 = jest.fn(() => ({ status: 'complete', error, promise: Promise.reject() }));
       const seq2 = jest.fn();
@@ -150,11 +129,15 @@ describe('', () => {
       ]);
 
       const resultMap = mapValues(sequenceFuncs, value => value());
-      expect(resultMap.seq1).toEqual({ status: 'complete', error, promise: Promise.reject() });
-      expect(resultMap.seq2).toEqual({ status: 'complete', error, promise: Promise.reject() });
+      try {
+        await Promise.all(Object.values(resultMap).map(({ promise }) => promise));
+      } catch (err) {
+        expect(resultMap.seq1).toEqual({ status: 'complete', error, promise: Promise.reject() });
+        expect(resultMap.seq2).toEqual({ status: 'complete', error, promise: Promise.reject() });
 
-      expect(seq1).toHaveBeenCalled();
-      expect(seq2).not.toHaveBeenCalled();
+        expect(seq1).toHaveBeenCalled();
+        expect(seq2).not.toHaveBeenCalled();
+      }
     });
 
     it('should work with iguazuReduce to run functions in parallel as part of the sequence', () => {
@@ -186,7 +169,7 @@ describe('', () => {
       }]);
 
       const seqValues = mapValues(sequenceFuncs, value => value());
-      const seqPromises = values(seqValues).map(({ promise }) => promise);
+      const seqPromises = Object.values(seqValues).map(({ promise }) => promise);
       await Promise.all(seqPromises);
       expect(seq2).toHaveBeenCalledWith({ seq1: { seq1A: 'seq1A data', seq1B: 'seq1B data' } });
     });

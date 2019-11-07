@@ -14,9 +14,7 @@
  * permissions and limitations under the License.
  */
 
-import values from 'lodash/values';
-import mapValues from 'lodash/mapValues';
-import zipObject from 'lodash/zipObject';
+import { mapValues, zipObject } from './utils';
 
 import { isSSR } from './ssr';
 
@@ -25,7 +23,7 @@ export function reduceData(loadResponseMap) {
 }
 
 export function reduceStatus(loadResponseMap) {
-  const responses = values(loadResponseMap);
+  const responses = Object.values(loadResponseMap);
 
   const loadStatusMap = mapValues(loadResponseMap, response => response.status);
   loadStatusMap.all =
@@ -38,7 +36,7 @@ export function reduceStatus(loadResponseMap) {
 }
 
 export function reduceErrors(loadResponseMap) {
-  const responses = values(loadResponseMap);
+  const responses = Object.values(loadResponseMap);
 
   const loadErrorMap = mapValues(loadResponseMap, response => response.error);
   loadErrorMap.any =
@@ -51,7 +49,7 @@ export function reduceErrors(loadResponseMap) {
 }
 
 export function reducePromise(loadResponseMap) {
-  return Promise.all(values(loadResponseMap).map(response => response.promise));
+  return Promise.all(Object.values(loadResponseMap).map(response => response.promise));
 }
 
 export function reducePromiseObject(loadResponseMap) {

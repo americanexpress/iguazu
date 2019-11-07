@@ -17,5 +17,37 @@
 
 // eslint-disable-next-line import/prefer-default-export
 export function handlePromiseRejection(promise) {
-  promise.then(null, () => { /* swallow */ });
+  return promise.then(null, () => { /* swallow */ });
+}
+
+export function pick(obj, keys) {
+  let index = keys.length - 1;
+  const nextObj = {};
+  while (index > -1) {
+    nextObj[keys[index]] = obj[keys[index]];
+    index -= 1;
+  }
+  return nextObj;
+}
+
+export function mapValues(obj, callback) {
+  const keys = Object.keys(obj);
+  let index = keys.length - 1;
+  const nextObj = {};
+  while (index > -1) {
+    nextObj[keys[index]] = callback(obj[keys[index]]);
+    index -= 1;
+  }
+  return nextObj;
+}
+
+export function zipObject(firstArray, secondArray) {
+  const len = firstArray.length;
+  let index = 0;
+  const nextObj = {};
+  while (index < len) {
+    nextObj[firstArray[index]] = secondArray[index];
+    index += 1;
+  }
+  return nextObj;
 }

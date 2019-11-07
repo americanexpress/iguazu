@@ -14,19 +14,39 @@
  * permissions and limitations under the License.
  */
 
-import React, { Component, Children } from 'react';
+import React, { createContext, cloneElement } from 'react';
 import PropTypes from 'prop-types';
 import { createStore, applyMiddleware } from 'redux';
-import { mount } from 'enzyme';
-import asyncBootstrapper from 'react-async-bootstrapper';
+import * as ReactRedux from 'react-redux';
+import { mount as baseMount } from 'enzyme';
 import thunk from 'redux-thunk';
 
-import { enableSSR, resetSSR } from '../src/ssr';
+import { resetSSR, enableSSR } from '../src/ssr';
 import * as utils from '../src/utils';
 import config from '../src/config';
 
 // Module under test
 import connectAsync from '../src/connectAsync';
+
+ReactRedux.ReactReduxContext = createContext(null);
+
+const { ReactReduxContext } = ReactRedux;
+
+const FakeReduxContext = ({ context, children, ...restOfProps }) => (
+  <ReactReduxContext.Provider value={context}>
+    {cloneElement(children, restOfProps)}
+  </ReactReduxContext.Provider>
+);
+
+FakeReduxContext.propTypes = {
+  context: PropTypes.shape({}).isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+const mountWithReduxContext = context => (jsx, options) => baseMount(
+  <FakeReduxContext context={context}>
+    {jsx}
+  </FakeReduxContext>, options);
 
 jest.mock('../src/config', () => ({
   // eslint-disable-next-line global-require
@@ -63,6 +83,7 @@ describe('connectAsync', () => {
   }
 
   let store;
+  let mount;
 
   const myAsyncLoadFunction = jest.fn();
   const loadDataAsProps = jest.fn(({ store: { getState, dispatch }, ownProps }) => ({
@@ -82,6 +103,7 @@ describe('connectAsync', () => {
 
   beforeEach(() => {
     store = createStore(reducer, applyMiddleware(thunk));
+    mount = mountWithReduxContext({ store });
     loadDataAsProps.ssr = false;
   });
 
@@ -91,7 +113,7 @@ describe('connectAsync', () => {
   });
 
   it('should pass reduced data and load status as props', () => {
-    const props = mount(<Container />, { context: { store } }).find(Presentation).props();
+    const props = mount(<Container />).find(Presentation).props();
     expect(props.myAsyncData).toEqual('populated data');
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
@@ -101,7 +123,7 @@ describe('connectAsync', () => {
     const localLoadStatus = {};
     const props = mount(<Container
       loadStatus={localLoadStatus}
-    />, { context: { store } }).find(Presentation).props();
+    />).find(Presentation).props();
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
     expect(props.loadStatus).not.toBe(localLoadStatus);
   });
@@ -112,7 +134,7 @@ describe('connectAsync', () => {
     myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
     const props = mount(<Container
       loadErrors={localLoadErrors}
-    />, { context: { store } }).find(Presentation).props();
+    />).find(Presentation).props();
     expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
     expect(props.loadErrors).not.toBe(localLoadErrors);
   });
@@ -121,7 +143,7 @@ describe('connectAsync', () => {
     const localIsLoading = {};
     const props = mount(<Container
       isLoading={localIsLoading}
-    />, { context: { store } }).find(Presentation).props();
+    />).find(Presentation).props();
     expect(props.isLoading).toBeInstanceOf(Function);
     expect(props.isLoading).not.toBe(localIsLoading);
   });
@@ -130,7 +152,7 @@ describe('connectAsync', () => {
     const localLoadedWithErrors = {};
     const props = mount(<Container
       loadedWithErrors={localLoadedWithErrors}
-    />, { context: { store } }).find(Presentation).props();
+    />).find(Presentation).props();
     expect(props.loadedWithErrors).toBeInstanceOf(Function);
     expect(props.loadedWithErrors).not.toBe(localLoadedWithErrors);
   });
@@ -139,7 +161,7 @@ describe('connectAsync', () => {
     const localAsyncData = 'local async data';
     const props = mount(<Container
       myAsyncData={localAsyncData}
-    />, { context: { store } }).find(Presentation).props();
+    />).find(Presentation).props();
     expect(props.myAsyncData).toEqual(localAsyncData);
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
@@ -148,14 +170,14 @@ describe('connectAsync', () => {
   it('should pass reduced data and load errors as props', () => {
     const error = new Error('load error');
     myAsyncLoadFunction.mockImplementationOnce(() => ({ error, data: error }));
-    const props = mount(<Container />, { context: { store } }).find(Presentation).props();
+    const props = mount(<Container />).find(Presentation).props();
     expect(props.myAsyncData).toEqual(error);
     expect(props.loadErrors).toEqual({ any: true, myAsyncData: error });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(1);
   });
 
   it('should update data and load status when parent props change', () => {
-    const wrapper = mount(<Container />, { context: { store } });
+    const wrapper = mount(<Container />);
     let props = wrapper.find(Presentation).props();
     expect(props.myAsyncData).toEqual('populated data');
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
@@ -167,14 +189,14 @@ describe('connectAsync', () => {
   });
 
   it('should not update data and load status when parent props have not changed', () => {
-    const wrapper = mount(<Container />, { context: { store } });
+    const wrapper = mount(<Container />);
     wrapper.setProps({ y: true });
     wrapper.setProps({ y: true });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(2);
   });
 
   it('should update data and load status when the store has updated', () => {
-    const wrapper = mount(<Container irrelevant="old" />, { context: { store } });
+    const wrapper = mount(<Container irrelevant="old" />);
     let props = wrapper.find(Presentation).props();
     expect(props.myAsyncData).toEqual('populated data');
     expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
@@ -189,13 +211,13 @@ describe('connectAsync', () => {
   });
 
   it('should not rerender when the store has updated, but the data and status are the same', () => {
-    mount(<Container />, { context: { store } });
+    mount(<Container />);
     store.dispatch({ type: 'IRRELEVANT_ACTION' });
     expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should not update data and load status when store has updated but it has unmounted', () => {
-    const wrapper = mount(<Container />, { context: { store } });
+    const wrapper = mount(<Container />);
     wrapper.unmount();
     store.dispatch({ type: 'X' });
     expect(loadDataAsProps).toHaveBeenCalledTimes(1);
@@ -207,7 +229,7 @@ describe('connectAsync', () => {
     const mockloadDataAsProps = () => ({ myAsyncData: () => ({ promise }) });
     const MockComponent = () => null;
     const MockContainer = connectAsync({ loadDataAsProps: mockloadDataAsProps })(MockComponent);
-    mount(<MockContainer />, { context: { store } });
+    mount(<MockContainer />);
     expect(spy).toHaveBeenCalledWith(promise);
   });
 
@@ -222,9 +244,9 @@ describe('connectAsync', () => {
     const Implied = () => null;
     const X = () => null;
     X.displayName = 'Explicit';
-    expect(connectAsync({ loadDataAsProps })(Implied).displayName).toBe('connectAsync(Implied)');
-    expect(connectAsync({ loadDataAsProps })(X).displayName).toBe('connectAsync(Explicit)');
-    expect(connectAsync({ loadDataAsProps })(() => null).displayName).toBe('connectAsync(Component)');
+    expect(connectAsync({ loadDataAsProps })(Implied).displayName).toBe('ReduxConsumerWrapper(connectAsync(Implied))');
+    expect(connectAsync({ loadDataAsProps })(X).displayName).toBe('ReduxConsumerWrapper(connectAsync(Explicit))');
+    expect(connectAsync({ loadDataAsProps })(() => null).displayName).toBe('ReduxConsumerWrapper(connectAsync(Component))');
   });
 
   describe('stateChangeComparator', () => {
@@ -232,7 +254,7 @@ describe('connectAsync', () => {
       const ContainerComparator = connectAsync({
         loadDataAsProps,
       })(Presentation);
-      const wrapper = mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      const wrapper = mount(<ContainerComparator irrelevant="old" />);
       wrapper.setProps({ irrelevant: 'new' });
       expect(config.stateChangeComparator).toHaveBeenCalledTimes(3);
     });
@@ -242,7 +264,7 @@ describe('connectAsync', () => {
         loadDataAsProps,
         stateChangeComparator: localStateChangeLimiter,
       })(Presentation);
-      const wrapper = mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      const wrapper = mount(<ContainerComparator irrelevant="old" />);
       wrapper.setProps({ irrelevant: 'new' });
       expect(config.stateChangeComparator).not.toHaveBeenCalled();
       expect(localStateChangeLimiter).toHaveBeenCalledTimes(3);
@@ -251,7 +273,7 @@ describe('connectAsync', () => {
       const ContainerComparator = connectAsync({
         loadDataAsProps,
       })(Presentation);
-      mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      mount(<ContainerComparator irrelevant="old" />);
       store.dispatch({ type: 'UPDATE_PARAM', param: 'y' });
       expect(config.stateChangeComparator).toHaveBeenCalledTimes(3);
     });
@@ -261,7 +283,7 @@ describe('connectAsync', () => {
         loadDataAsProps,
         stateChangeComparator: localStateChangeLimiter,
       })(Presentation);
-      mount(<ContainerComparator irrelevant="old" />, { context: { store } });
+      mount(<ContainerComparator irrelevant="old" />);
       store.dispatch({ type: 'UPDATE_PARAM', param: 'y' });
       expect(config.stateChangeComparator).not.toHaveBeenCalled();
       expect(localStateChangeLimiter).toHaveBeenCalledTimes(3);
@@ -273,8 +295,8 @@ describe('connectAsync', () => {
       const ContainerLimited = connectAsync({
         loadDataAsProps,
       })(Presentation);
-      const wrapper = mount(<ContainerLimited />, { context: { store } });
-      const instance = wrapper.instance();
+      const wrapper = mount(<ContainerLimited />);
+      const instance = wrapper.find('connectAsync(Presentation)').instance();
       expect(config.stateChangeLimiter).toHaveBeenCalledWith(instance.onReduxStateChange);
     });
     it('applies a locally provided limiter on redux state change', () => {
@@ -283,50 +305,54 @@ describe('connectAsync', () => {
         loadDataAsProps,
         stateChangeLimiter: localStateChangeLimiter,
       })(Presentation);
-      const wrapper = mount(<ContainerLimited />, { context: { store } });
-      const instance = wrapper.instance();
+      const wrapper = mount(<ContainerLimited />);
+      const instance = wrapper.find('connectAsync(Presentation)').instance();
       expect(localStateChangeLimiter).toHaveBeenCalledWith(instance.onReduxStateChange);
     });
   });
 
   describe('isLoading', () => {
     it('should be provided as a prop to the wrapped component', () => {
-      const wrapper = mount(<Container />, { context: { store } });
+      const wrapper = mount(<Container />);
       const props = wrapper.find(Presentation).props();
-      expect(props.isLoading).toBe(wrapper.instance().isLoading);
+      expect(props.isLoading).toBe(wrapper.find('connectAsync(Presentation)').instance().isLoading);
     });
 
     it('should not be overridden by local props', () => {
       const localIsLoading = jest.fn();
-      const wrapper = mount(<Container isLoading={localIsLoading} />, { context: { store } });
+      const wrapper = mount(<Container isLoading={localIsLoading} />);
       const props = wrapper.find(Presentation).props();
-      expect(props.isLoading).toBe(wrapper.instance().isLoading);
+      expect(props.isLoading).toBe(wrapper.find('connectAsync(Presentation)').instance().isLoading);
       expect(props.isLoading).not.toBe(localIsLoading);
     });
 
     describe('no props of interest provided', () => {
       it('should return true when any of the async props are in the middle of loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ status: { a: 'loading', b: 'complete' } });
         expect(wrapper.instance().isLoading()).toBe(true);
       });
 
       it('should return false when all of the async props are done loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ status: { a: 'complete', b: 'complete' } });
         expect(wrapper.instance().isLoading()).toBe(false);
       });
     });
 
     describe('props of interest provided', () => {
-      it('should return true when any of the async props of intereset are in the middle of loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+      it('should return true when any of the async props of interest are in the middle of loading', () => {
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ status: { a: 'loading', b: 'complete', c: 'complete' } });
         expect(wrapper.instance().isLoading(['a', 'c'])).toBe(true);
       });
 
       it('should return false when all of the async props of interest are done loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ status: { a: 'loading', b: 'complete', c: 'complete' } });
         expect(wrapper.instance().isLoading(['b', 'c'])).toBe(false);
       });
@@ -337,16 +363,17 @@ describe('connectAsync', () => {
     const loadError = new Error('A wild load error appeared');
 
     it('should be provided as a prop to the wrapped component', () => {
-      const wrapper = mount(<Container />, { context: { store } });
+      const wrapper = mount(<Container />);
       const props = wrapper.find(Presentation).props();
-      expect(props.loadedWithErrors).toBe(wrapper.instance().loadedWithErrors);
+      expect(props.loadedWithErrors).toBe(wrapper.find('connectAsync(Presentation)').instance().loadedWithErrors);
     });
 
     it('should not be overridden by local props', () => {
       const localLoadedWithErrors = jest.fn();
-      const wrapper = mount(<Container
+      const baseWrapper = mount(<Container
         loadedWithErrors={localLoadedWithErrors}
-      />, { context: { store } });
+      />);
+      const wrapper = baseWrapper.find('connectAsync(Presentation)');
       const props = wrapper.find(Presentation).props();
       expect(props.loadedWithErrors).toBe(wrapper.instance().loadedWithErrors);
       expect(props.loadedWithErrors).not.toBe(localLoadedWithErrors);
@@ -354,13 +381,15 @@ describe('connectAsync', () => {
 
     describe('no props of interest provided', () => {
       it('should return true if any of the async props had an error while loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ errors: { a: loadError, b: undefined } });
         expect(wrapper.instance().loadedWithErrors()).toBe(true);
       });
 
       it('should return false if all of the async props loaded without errors', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ errors: {} });
         expect(wrapper.instance().loadedWithErrors()).toBe(false);
       });
@@ -368,13 +397,15 @@ describe('connectAsync', () => {
 
     describe('props of interest provided', () => {
       it('should return true when any of the async props of interest had an error while loading', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ errors: { a: loadError } });
         expect(wrapper.instance().loadedWithErrors(['a'])).toBe(true);
       });
 
       it('should return false if all of the async props of interest loaded without errors', () => {
-        const wrapper = mount(<Container />, { context: { store } });
+        const baseWrapper = mount(<Container />);
+        const wrapper = baseWrapper.find('connectAsync(Presentation)');
         wrapper.setState({ errors: { a: loadError } });
         expect(wrapper.instance().loadedWithErrors(['b', 'c'])).toBe(false);
       });
@@ -382,46 +413,24 @@ describe('connectAsync', () => {
   });
 
   describe('SSR', () => {
-    class ProviderMock extends Component {
-      getChildContext() {
-        return { store: this.props.store }; // eslint-disable-line react/prop-types
-      }
-
-      render() {
-        return Children.only(this.props.children); // eslint-disable-line react/prop-types
-      }
-    }
-    ProviderMock.childContextTypes = {
-      store: PropTypes.object.isRequired,
-    };
-
-    it('should work with react-async-bootstrapper to preload data', async () => {
+    it('should trigger loadDataAsProps to be called', async () => {
       enableSSR();
       loadDataAsProps.ssr = true;
       const Wrapped = connectAsync({ loadDataAsProps })(Presentation);
       const app = (
-        <ProviderMock store={store}>
-          <Wrapped param="y" />
-        </ProviderMock>
+        <Wrapped param="y" />
       );
-      await asyncBootstrapper(app);
       const wrapper = mount(app);
       const props = wrapper.find(Presentation).props();
-      expect(props.myAsyncData).toEqual('more populated data');
-      expect(props.loadStatus).toEqual({ all: 'complete', myAsyncData: 'complete' });
-      // once in asyncBootstrap, once in componentWillMount during ssr tree walk
-      // and once in componentWillMount during mount
-      expect(myAsyncLoadFunction).toHaveBeenCalledTimes(3);
+      expect(props.loadStatus).toEqual({ all: 'loading', myAsyncData: 'loading' });
+      expect(myAsyncLoadFunction).toHaveBeenCalled();
     });
 
     it('should skip preloading if ssr option is not set', async () => {
       enableSSR();
       const app = (
-        <ProviderMock store={store}>
-          <Container />
-        </ProviderMock>
+        <Container />
       );
-      await asyncBootstrapper(app);
       mount(app);
       expect(myAsyncLoadFunction).not.toHaveBeenCalled();
     });

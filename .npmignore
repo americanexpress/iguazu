@@ -9,3 +9,4 @@ CODEOWNERS
 *.tgz
 test-setup.js
 .jest-cache
+.vscode
