@@ -14,9 +14,7 @@
  * permissions and limitations under the License.
  */
 
-import { mapValues, zipObject } from './utils';
-
-import { isSSR } from './ssr';
+import { mapValues, zipObject, isServer } from './utils';
 
 export function reduceData(loadResponseMap) {
   return mapValues(loadResponseMap, response => response.data);
@@ -62,11 +60,10 @@ export function reducePromiseObject(loadResponseMap) {
 
 export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {}) {
   return (loadInputs) => {
-    const ssr = isSSR();
-    if (ssr && !loadFunc.ssr) { return { status: 'loading' }; }
+    if (isServer() && !loadFunc.ssr) { return { status: 'loading' }; }
 
     const loadFuncMap = loadFunc(loadInputs);
-    const loadResponseMap = mapValues(loadFuncMap, func => func({ ssr }));
+    const loadResponseMap = mapValues(loadFuncMap, func => func({ isServer: isServer() }));
 
     const data = reduceData(loadResponseMap);
     const status = reduceStatus(loadResponseMap).all;

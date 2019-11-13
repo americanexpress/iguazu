@@ -14,10 +14,10 @@
  * permissions and limitations under the License.
  */
 
-import { isSSR } from './ssr';
+import { isServer } from './utils';
 
 export function defer(func) {
-  if (!isSSR()) {
+  if (!isServer()) {
     return func;
   }
 

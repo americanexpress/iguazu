@@ -21,7 +21,6 @@ import * as ReactRedux from 'react-redux';
 import { mount as baseMount } from 'enzyme';
 import thunk from 'redux-thunk';
 
-import { resetSSR, enableSSR } from '../src/ssr';
 import * as utils from '../src/utils';
 import config from '../src/config';
 
@@ -109,7 +108,7 @@ describe('connectAsync', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    resetSSR();
+    utils.isServer = () => false;
   });
 
   it('should pass reduced data and load status as props', () => {
@@ -414,7 +413,7 @@ describe('connectAsync', () => {
 
   describe('SSR', () => {
     it('should trigger loadDataAsProps to be called', async () => {
-      enableSSR();
+      utils.isServer = () => true;
       loadDataAsProps.ssr = true;
       const Wrapped = connectAsync({ loadDataAsProps })(Presentation);
       const app = (
@@ -427,9 +426,11 @@ describe('connectAsync', () => {
     });
 
     it('should skip preloading if ssr option is not set', async () => {
-      enableSSR();
+      utils.isServer = () => true;
+      loadDataAsProps.ssr = undefined;
+      const Wrapped = connectAsync({ loadDataAsProps })(Presentation);
       const app = (
-        <Container />
+        <Wrapped />
       );
       mount(app);
       expect(myAsyncLoadFunction).not.toHaveBeenCalled();

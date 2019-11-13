@@ -13,8 +13,7 @@
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-import { enableSSR, resetSSR } from '../src/ssr';
+import * as utils from '../src/utils';
 
 import iguazuReduce, {
   reduceData,
@@ -110,7 +109,8 @@ describe('reducers', () => {
 
   describe('iguazuReduce', () => {
     afterEach(() => {
-      resetSSR();
+      // eslint-disable-next-line no-global-assign
+      utils.isServer = () => false;
     });
 
     it('should use the data, status, and promise reducers to return one object', async () => {
@@ -144,7 +144,8 @@ describe('reducers', () => {
     });
 
     it('should not execute the load function on server if the load function is not ssr enabled', () => {
-      enableSSR();
+      // eslint-disable-next-line no-global-assign
+      utils.isServer = () => true;
       const loadDataAsProps = jest.fn();
       const reducedLoadResponse = iguazuReduce(loadDataAsProps)();
       expect(reducedLoadResponse).toEqual({ status: 'loading' });

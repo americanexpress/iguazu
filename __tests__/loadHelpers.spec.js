@@ -14,9 +14,8 @@
  * permissions and limitations under the License.
  */
 
-import { mapValues } from '../src/utils';
+import * as utils from '../src/utils';
 
-import { enableSSR, resetSSR } from '../src/ssr';
 import iguazuReduce from '../src/reduce';
 import {
   defer,
@@ -24,9 +23,11 @@ import {
   sequence,
 } from '../src/loadHelpers';
 
+const { mapValues } = utils;
+
 describe('', () => {
   afterEach(() => {
-    resetSSR();
+    utils.isServer = () => false;
   });
 
   describe('defer', () => {
@@ -44,7 +45,7 @@ describe('', () => {
     });
 
     it('should skip the load function and just return a loading response when on server', async () => {
-      enableSSR();
+      utils.isServer = () => true;
       const wrappedLoadFunc = defer(loadFunc);
       let loadResponse = wrappedLoadFunc();
       await Promise.all([loadResponse.promise]);

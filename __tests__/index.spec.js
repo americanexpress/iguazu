@@ -20,7 +20,6 @@ import {
   defer,
   noncritical,
   sequence,
-  enableSSR,
   configureIguazu,
 } from '../src/index';
 
@@ -31,7 +30,6 @@ describe('Public API', () => {
     expect(defer).toBeDefined();
     expect(noncritical).toBeDefined();
     expect(sequence).toBeDefined();
-    expect(enableSSR).toBeDefined();
     expect(configureIguazu).toBeDefined();
   });
 });

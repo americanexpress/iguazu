@@ -17,7 +17,7 @@ Iguazu seeks to simplify this flow into one step.
 ## Usage
 Iguazu exports a Higher Order Component (HOC) `connectAsync` similar to React Redux's `connect`.  Instead of taking a `mapStateToProps` function, it takes a `loadDataAsProps` function. It should return a map where each key is the name of a prop that will contain some asynchronous data and the value is the load function that will load that data if it is not already loaded.  The load function must synchronously return an object with the keys `data`, `status`, `error`, and `promise`. The key `data` should be the data returned from the asynchronous call. The key `status` should be either `loading` to signal the asynchronous call is in flight or `complete` to signal it has returned. The key `error` should be a truthy value if there was an error while loading. The key `promise` should be the promise of the asynchronous call.
 
-For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass two function props, `isLoading` and `loadedWithErrors`, which will tell you if any of the async props are still loading or loaded with errors respecitively. If you are only interested in a subset of async props, you can pass an array of the props names as the first argument. There will also be a prop named `loadErrors` that maps the load error, if there is one, for each prop. You can use this if you want to more granularly dig into what failed.
+For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass two function props, `isLoading` and `loadedWithErrors`, which will tell you if any of the async props are still loading or loaded with errors respectively. If you are only interested in a subset of async props, you can pass an array of the props names as the first argument. There will also be a prop named `loadErrors` that maps the load error, if there is one, for each prop. You can use this if you want to more granularly dig into what failed.
 
 Example:
 
@@ -68,26 +68,17 @@ You can see that by moving the logic responsible for selecting out the cached da
 ### SSR
 The main benefits of server side rendering are improved perceived speed and SEO. With perceived speed, the general best practice is to get something in front of the user's eyes as fast as possible. Typically that means you shouldn't wait for any data before rendering to string. For SEO, it's more important that you render the full content, and if that content is dynamic, you'll need to wait on some data. Usually not every view is important for SEO, such as logged in views, so the best option is to only preload data you absolutely have to for SEO. For this reason, Iguazu makes SSR data preloading opt in. If you would like a component's data to be loaded prior to rendering on the server, you can add a property named `ssr` with the value of true.
 
-**Note:** Whether or not you are planning on waiting for data to load before doing a server side render, you will need to tell Iguazu it is running on node by calling `enableSSR`. Otherwise it will assume it is running on the client and will execute the load functions in `componentWillMount` during `renderToString` whether you opted in or not. If you're not running `renderToString`, you don't have to worry.
-
 Example:
 
 ```javascript
 /* server.js */
-import { enableSSR } from 'iguazu';
 import express from 'express';
 
-enableSSR();
-
 const app = express();
-// Set up express app
-
 /* Component.jsx */
 function loadDataAsProps() {...}
 loadDataAsProps.ssr = true;
 ```
-
-Iguazu supports react-async-bootstrapper so that you are not restricted to using iguazu for ssr data preloading.  See react-async-bootstrapper's documentation for instructions on how to wait on SSR data preloading.
 
 #### Helper methods
 Sometimes you might want to enable SSR preloading for a component, but only for some of its data. Iguazu provides some helper methods, `defer` and `noncritical`, to more granularly load data on the server. If you wrap a load function with `defer`, it will not execute the load function at all and will just return a status of `loading`. If you wrap a function with `noncritical`, the load function will execute, but its promise will be caught so that if it rejects it won't cause the Promise.all to reject and return before the other more critical pieces of data have returned.
@@ -116,8 +107,8 @@ function MyComponent({ someData }) {
 
 function loadDataAsProps() {
   return {
-    someData: ({ ssr }) =>
-      (ssr ? { data: { list: [] }, status: 'loading' } : dispatch(loadSomeData()))
+    someData: ({ isServer }) =>
+      (isServer ? { data: { list: [] }, status: 'loading' } : dispatch(loadSomeData()))
   }
 }
 ```
@@ -182,7 +173,7 @@ function Parent({ isLoading, parent }) {
 
 function parentLoadDataAsProps({ store: { dispatch } }) {
   return {
-    parents: dispatch(loadLoggedInParent()),
+    parents: () => dispatch(loadLoggedInParent()),
   };
 }
 
@@ -203,7 +194,7 @@ function Kids({ isLoading, kids }) {
 
 function kidsLoadDataAsProps({ store: { dispatch }, ownProps: { parentId } }) {
   return {
-    kids: dispatch(loadKidsByParent(parentId)),
+    kids: () => dispatch(loadKidsByParent(parentId)),
   };
 }
 
@@ -452,6 +443,19 @@ const sequenceLoadFunctions = sequence([
 
 ## Why is it called Iguazu?
 This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
+
+## Upgrading
+
+### v2.x.x to v3.x.x
+
+- Upgraded to React Redux 7.x.x, Redux 4.x.x, and Redux Thunk 2.x.x
+- Using new [React Context](https://reactjs.org/docs/context.html) Consumer for retrieving Redux store.
+- Added a `ReduxConsumer` wrapping component to `connectAsync` which, may break jest snapshots.
+- Removed `enableSSR`, `disableSSR`, and `isSSR` methods in favor of checking for `window` to determine Server versus Client in SSR mode
+- `loadDataAsProps` functions receive `isServer` as an argument rather than `ssr` now.
+- Moved `react`, `react-dom`, `react-redux`, `redux`, and `redux-thunk` to `peerDependencies`
+- Removed `lodash` and decreased gzip bundle size from `~9.6kb` to `~4.5kb` gzipped.
+- Iguazu adapters remain compatible, just upgrade dependency on `iguazu` to `^3.0.0`.
 
 ## Contributing
 We welcome Your interest in the American Express Open Source Community on Github.

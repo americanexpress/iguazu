@@ -19,10 +19,8 @@ import { ReactReduxContext } from 'react-redux';
 import hoistStatics from 'hoist-non-react-statics';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-
 import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
-import { isSSR } from './ssr';
-import { handlePromiseRejection, pick, mapValues } from './utils';
+import { handlePromiseRejection, pick, mapValues, isServer } from './utils';
 import config from './config';
 
 export default function connectAsync({
@@ -33,13 +31,12 @@ export default function connectAsync({
   const ssrEnabled = loadDataAsProps.ssr;
   function buildState({ store, ownProps }) {
     const propFuncs = loadDataAsProps({ store, ownProps });
-    const ssr = isSSR();
 
     let propResultMap;
-    if (ssr && !ssrEnabled) {
+    if (isServer() && !ssrEnabled) {
       propResultMap = mapValues(propFuncs, () => ({ status: 'loading' }));
     } else {
-      propResultMap = mapValues(propFuncs, value => value({ ssr }));
+      propResultMap = mapValues(propFuncs, value => value({ isServer: isServer() }));
     }
 
     const promise = reducePromise(propResultMap);

@@ -16,7 +16,6 @@
 
 import connectAsync from './connectAsync';
 import iguazuReduce from './reduce';
-import { enableSSR } from './ssr';
 import { defer, noncritical, sequence } from './loadHelpers';
 import { configureIguazu } from './config';
 
@@ -26,6 +25,5 @@ export {
   defer,
   noncritical,
   sequence,
-  enableSSR,
   configureIguazu,
 };

@@ -51,3 +51,7 @@ export function zipObject(firstArray, secondArray) {
   }
   return nextObj;
 }
+
+export function isServer() {
+  return typeof window === 'undefined';
+}
