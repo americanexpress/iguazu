@@ -23,6 +23,8 @@ import iguazuReduce, {
   reduceErrors,
 } from '../src/reduce';
 
+const isServer = jest.spyOn(utils, 'isServer');
+
 describe('reducers', () => {
   describe('reduceData', () => {
     it('should return a map of the data', () => {
@@ -109,8 +111,7 @@ describe('reducers', () => {
 
   describe('iguazuReduce', () => {
     afterEach(() => {
-      // eslint-disable-next-line no-global-assign
-      utils.isServer = () => false;
+      isServer.mockImplementation(() => false);
     });
 
     it('should use the data, status, and promise reducers to return one object', async () => {
@@ -144,8 +145,7 @@ describe('reducers', () => {
     });
 
     it('should not execute the load function on server if the load function is not ssr enabled', () => {
-      // eslint-disable-next-line no-global-assign
-      utils.isServer = () => true;
+      isServer.mockImplementationOnce(() => true);
       const loadDataAsProps = jest.fn();
       const reducedLoadResponse = iguazuReduce(loadDataAsProps)();
       expect(reducedLoadResponse).toEqual({ status: 'loading' });

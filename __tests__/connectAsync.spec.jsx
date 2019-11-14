@@ -83,6 +83,7 @@ describe('connectAsync', () => {
 
   let store;
   let mount;
+  const isServer = jest.spyOn(utils, 'isServer');
 
   const myAsyncLoadFunction = jest.fn();
   const loadDataAsProps = jest.fn(({ store: { getState, dispatch }, ownProps }) => ({
@@ -104,11 +105,11 @@ describe('connectAsync', () => {
     store = createStore(reducer, applyMiddleware(thunk));
     mount = mountWithReduxContext({ store });
     loadDataAsProps.ssr = false;
+    isServer.mockImplementation(() => false);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
-    utils.isServer = () => false;
   });
 
   it('should pass reduced data and load status as props', () => {
@@ -413,7 +414,7 @@ describe('connectAsync', () => {
 
   describe('SSR', () => {
     it('should trigger loadDataAsProps to be called', async () => {
-      utils.isServer = () => true;
+      isServer.mockImplementation(() => true);
       loadDataAsProps.ssr = true;
       const Wrapped = connectAsync({ loadDataAsProps })(Presentation);
       const app = (
@@ -426,7 +427,7 @@ describe('connectAsync', () => {
     });
 
     it('should skip preloading if ssr option is not set', async () => {
-      utils.isServer = () => true;
+      isServer.mockImplementation(() => true);
       loadDataAsProps.ssr = undefined;
       const Wrapped = connectAsync({ loadDataAsProps })(Presentation);
       const app = (

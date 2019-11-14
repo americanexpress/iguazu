@@ -25,9 +25,11 @@ import {
 
 const { mapValues } = utils;
 
+const isServer = jest.spyOn(utils, 'isServer');
+
 describe('', () => {
   afterEach(() => {
-    utils.isServer = () => false;
+    isServer.mockImplementation(() => false);
   });
 
   describe('defer', () => {
@@ -45,7 +47,7 @@ describe('', () => {
     });
 
     it('should skip the load function and just return a loading response when on server', async () => {
-      utils.isServer = () => true;
+      isServer.mockImplementation(() => true);
       const wrappedLoadFunc = defer(loadFunc);
       let loadResponse = wrappedLoadFunc();
       await Promise.all([loadResponse.promise]);
