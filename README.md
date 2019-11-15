@@ -294,6 +294,19 @@ const sequenceLoadFunctions = sequence([
 ]);
 ```
 
+Function handlers require the previous calls to succeed to continue to the next by default. In the
+event a request returns with an error all remaining calls are flagged with the same error. To bypass
+this default behavior, you can wrap the function handler in `noncritical` to continue without the
+previous results.
+
+```javascript
+const sequenceLoadFunctions = sequence([
+  { key: 'first', handler: () => dispatch(loadFirst()) },
+  { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
+  { key: 'unrelated', handler: noncritical(() => dispatch(loadUnrelated())) },
+]);
+````
+
 ### Updating
 
 Iguazu processes updates on Redux state changes by comparing the previous and next responses from `loadDataAsProps` using

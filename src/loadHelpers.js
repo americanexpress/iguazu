@@ -54,7 +54,7 @@ export function sequence(funcs) {
 
       mappedFunc = () => {
         const result = prevFunction();
-        const { promise: prevPromise, status, error, data } = result;
+        const { promise: prevPromise, status, error, data, noncritical: isNonCritical } = result;
         sequencedData = { [prevKey]: data, ...sequencedData };
 
         const promise = prevPromise
@@ -66,7 +66,7 @@ export function sequence(funcs) {
 
         if (status === 'loading') {
           return { status: 'loading', promise };
-        } else if (error) {
+        } else if (error && isNonCritical !== true) {
           return { status: 'complete', error, promise };
         }
 
