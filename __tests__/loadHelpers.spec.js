@@ -157,6 +157,23 @@ describe('', () => {
       expect(seq2).not.toHaveBeenCalled();
     });
 
+    it('should handle a previous function that had a noncritical error', async () => {
+      const error = new Error('woops');
+      const seq1 = jest.fn(() => ({ status: 'complete', error, promise: Promise.reject() }));
+      const seq2 = jest.fn(() => ({ status: 'loading', promise: Promise.resolve('seq2 data') }));
+
+      const sequenceFuncs = sequence([
+        { key: 'seq1', handler: noncritical(seq1) },
+        { key: 'seq2', handler: seq2 },
+      ]);
+
+      const resultMap = mapValues(sequenceFuncs, value => value());
+
+      const seq2Resolve = await resultMap.seq2.promise;
+      expect(seq2Resolve).toEqual({ seq1: undefined, seq2: 'seq2 data' });
+      expect(seq2).toHaveBeenCalledWith({ seq1: undefined });
+    });
+
     it('should work with iguazuReduce to run functions in parallel as part of the sequence', () => {
       const seq2 = jest.fn(() => ({ status: 'loading' }));
       const sequenceFuncs = sequence([{
