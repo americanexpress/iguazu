@@ -17,18 +17,17 @@
 import { mapValues, zipObject, isServer } from './utils';
 
 export function reduceData(loadResponseMap) {
-  return mapValues(loadResponseMap, response => response.data);
+  return mapValues(loadResponseMap, (response) => response.data);
 }
 
 export function reduceStatus(loadResponseMap) {
   const responses = Object.values(loadResponseMap);
 
-  const loadStatusMap = mapValues(loadResponseMap, response => response.status);
-  loadStatusMap.all =
-    responses
-      .filter(response => !response.noncritical)
-      .map(response => response.status)
-      .every(s => s === 'complete') ? 'complete' : 'loading';
+  const loadStatusMap = mapValues(loadResponseMap, (response) => response.status);
+  loadStatusMap.all = responses
+    .filter((response) => !response.noncritical)
+    .map((response) => response.status)
+    .every((s) => s === 'complete') ? 'complete' : 'loading';
 
   return loadStatusMap;
 }
@@ -36,26 +35,25 @@ export function reduceStatus(loadResponseMap) {
 export function reduceErrors(loadResponseMap) {
   const responses = Object.values(loadResponseMap);
 
-  const loadErrorMap = mapValues(loadResponseMap, response => response.error);
-  loadErrorMap.any =
-    responses
-      .filter(response => !response.noncritical)
-      .map(response => response.error)
-      .some(error => error);
+  const loadErrorMap = mapValues(loadResponseMap, (response) => response.error);
+  loadErrorMap.any = responses
+    .filter((response) => !response.noncritical)
+    .map((response) => response.error)
+    .some((error) => error);
 
   return loadErrorMap;
 }
 
 export function reducePromise(loadResponseMap) {
-  return Promise.all(Object.values(loadResponseMap).map(response => response.promise));
+  return Promise.all(Object.values(loadResponseMap).map((response) => response.promise));
 }
 
 export function reducePromiseObject(loadResponseMap) {
   const keys = Object.keys(loadResponseMap);
-  const promises = keys.map(key => loadResponseMap[key].promise);
+  const promises = keys.map((key) => loadResponseMap[key].promise);
 
   return Promise.all(promises)
-    .then(responses => zipObject(keys, responses));
+    .then((responses) => zipObject(keys, responses));
 }
 
 export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {}) {
@@ -63,7 +61,7 @@ export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {})
     if (isServer() && !loadFunc.ssr) { return { status: 'loading' }; }
 
     const loadFuncMap = loadFunc(loadInputs);
-    const loadResponseMap = mapValues(loadFuncMap, func => func({ isServer: isServer() }));
+    const loadResponseMap = mapValues(loadFuncMap, (func) => func({ isServer: isServer() }));
 
     const data = reduceData(loadResponseMap);
     const status = reduceStatus(loadResponseMap).all;

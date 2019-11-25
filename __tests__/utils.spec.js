@@ -1,4 +1,6 @@
-import { handlePromiseRejection, pick, mapValues, zipObject } from '../src/utils';
+import {
+  handlePromiseRejection, pick, mapValues, zipObject,
+} from '../src/utils';
 
 describe('utils', () => {
   describe('handlePromiseRejection', () => {
@@ -23,7 +25,7 @@ describe('utils', () => {
         two: 2,
         three: 3,
       };
-      expect(mapValues(startObject, item => `!${item}`)).toMatchSnapshot();
+      expect(mapValues(startObject, (item) => `!${item}`)).toMatchSnapshot();
     });
   });
   describe('zipObject', () => {

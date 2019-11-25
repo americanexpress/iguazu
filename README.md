@@ -1,11 +1,40 @@
-# Iguazu
+<h1>
+  <center>
+    <br />
+    <img src="./iguazu.png" alt="iguazu - Iguazu" width="50%" />
+    <br /><br />
+  </center>
+</h1>
 
-An asynchronous data flow solution for React/Redux applications.
+[![npm version](https://badge.fury.io/js/iguazu.svg)](https://badge.fury.io/js/iguazu)
+[![Build Status](https://travis-ci.org/americanexpress/iguazu.svg?branch=master)](https://travis-ci.org/americanexpress/iguazu)
 
-> Want to get paid for your contributions to `iguazu`?
+> Iguazu is a simple Redux-powered Async Query engine. By using a
+> Higher-Order Component, Iguazu transparently manages dispatching async
+> requests and injecting into React props. Iguazu has an ecosystem of
+> adapters for various querying + caching strategies: [Iguazu RPC](https://github.com/americanexpress/iguazu-rpc), [Iguazu GraphQL](https://github.com/americanexpress/iguazu-graphql) and [Iguazu REST](https://github.com/americanexpress/iguazu-rest).
+
+## 👩‍💻 Hiring 👨‍💻
+
+Want to get paid for your contributions to `iguazu`?
 > Send your resume to oneamex.careers@aexp.com
 
-## Motivation
+## 📖 Table of Contents
+
+* [Features](#-features)
+* [Usage](#-usage)
+* [Upgrading](#-upgrading)
+* [Available Scripts](#-available-scripts)
+* [Contributing](#-contributing)
+
+## ✨ Features
+
+* Streamlines dispatching, load states, and injecting into React props
+* Parallel and sequential async requests
+* Server-side rendering ready
+
+### Motivation
+
 [react-redux](https://github.com/reduxjs/react-redux) works great for when you want to take data that already exists in state and inject it as props into a React component, but it doesn't help you at all with the flow of loading asynchronous data into state. If a react component relies on asynchronous data you typically have to do three things:
 
 1. Define a load action responsible for fetching the asynchronous data, which should be triggered on mount and when the component receives new props that change what data should be loaded
@@ -14,7 +43,16 @@ An asynchronous data flow solution for React/Redux applications.
 
 Iguazu seeks to simplify this flow into one step.
 
-## Usage
+## 🤹‍ Usage
+
+### Installation
+
+```bash
+npm install --save iguazu
+```
+
+### Base Concepts
+
 Iguazu exports a Higher Order Component (HOC) `connectAsync` similar to React Redux's `connect`.  Instead of taking a `mapStateToProps` function, it takes a `loadDataAsProps` function. It should return a map where each key is the name of a prop that will contain some asynchronous data and the value is the load function that will load that data if it is not already loaded.  The load function must synchronously return an object with the keys `data`, `status`, `error`, and `promise`. The key `data` should be the data returned from the asynchronous call. The key `status` should be either `loading` to signal the asynchronous call is in flight or `complete` to signal it has returned. The key `error` should be a truthy value if there was an error while loading. The key `promise` should be the promise of the asynchronous call.
 
 For each key defined in the `loadDataAsProps` function, the HOC will pass a prop to the wrapped component that contains the data. It will also pass two function props, `isLoading` and `loadedWithErrors`, which will tell you if any of the async props are still loading or loaded with errors respectively. If you are only interested in a subset of async props, you can pass an array of the props names as the first argument. There will also be a prop named `loadErrors` that maps the load error, if there is one, for each prop. You can use this if you want to more granularly dig into what failed.
@@ -22,33 +60,10 @@ For each key defined in the `loadDataAsProps` function, the HOC will pass a prop
 Example:
 
 ```javascript
-/* MyContainer.jsx */
+/* actions.js */
 import React from 'react';
 import { connectAsync } from 'iguazu';
 
-function MyContainer({ isLoading, loadedWithErrors, myData, myOtherData }) {
-  if (isLoading()) {
-    return <div>Loading...</div>
-  }
-
-  if (loadedWithErrors()) {
-    return <div>Oh no! Something went wrong</div>
-  }
-
-  return <div>myData = {myData} myOtherData = {myOtherData}</div>
-}
-
-function loadDataAsProps({ store, ownProps }) {
-  const { dispatch, getState } = store;
-  return {
-    myData: () => dispatch(queryMyData(ownProps.someParam)),
-    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
-  }
-}
-
-export default connectAsync({ loadDataAsProps })(MyContainer);
-
-/* actions.js */
 export function queryMyData(param) {
   return (dispatch, getState) => {
     const data = getState().path.to.myData[param];
@@ -56,16 +71,54 @@ export function queryMyData(param) {
     const promise = data ? Promise.resolve : dispatch(fetchMyData(param));
 
     return { data, status, promise };
-  }
+  };
 }
 
-export function queryMyOtherData(param) {/* Essentially the same as queryMyData */};
+export function queryMyOtherData(param) { /* Essentially the same as queryMyData */ }
+
+/* MyContainer.jsx */
+function MyContainer({
+  isLoading,
+  loadedWithErrors,
+  myData,
+  myOtherData,
+}) {
+  if (isLoading()) {
+    return <div>Loading...</div>;
+  }
+
+  if (loadedWithErrors()) {
+    return <div>Oh no! Something went wrong</div>;
+  }
+
+  return (
+    <div>
+      myData =
+      {' '}
+      {myData}
+      myOtherData =
+      {' '}
+      {myOtherData}
+    </div>
+  );
+}
+
+function loadDataAsProps({ store, ownProps }) {
+  const { dispatch, getState } = store;
+  return {
+    myData: () => dispatch(queryMyData(ownProps.someParam)),
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam)),
+  };
+}
+
+export default connectAsync({ loadDataAsProps })(MyContainer);
 ```
 
 You can see that by moving the logic responsible for selecting out the cached data and triggering a fetch if needed into the actions makes the components much simpler.
 
-## Advanced Usage
-### SSR
+### Advanced Concepts
+
+#### SSR
 The main benefits of server side rendering are improved perceived speed and SEO. With perceived speed, the general best practice is to get something in front of the user's eyes as fast as possible. Typically that means you shouldn't wait for any data before rendering to string. For SEO, it's more important that you render the full content, and if that content is dynamic, you'll need to wait on some data. Usually not every view is important for SEO, such as logged in views, so the best option is to only preload data you absolutely have to for SEO. For this reason, Iguazu makes SSR data preloading opt in. If you would like a component's data to be loaded prior to rendering on the server, you can add a property named `ssr` with the value of true.
 
 Example:
@@ -76,7 +129,7 @@ import express from 'express';
 
 const app = express();
 /* Component.jsx */
-function loadDataAsProps() {...}
+function loadDataAsProps() { /* ... */ }
 loadDataAsProps.ssr = true;
 ```
 
@@ -91,8 +144,8 @@ import { defer, noncritical } from 'iguazu';
 function loadDataAsProps() {
   return {
     clientOnlyData: defer(() => dispatch(loadClientData())),
-    tryToLoadOnServerData: noncritical(() => dispatch(loadIffyData()))
-  }
+    tryToLoadOnServerData: noncritical(() => dispatch(loadIffyData())),
+  };
 }
 ```
 
@@ -102,18 +155,17 @@ Example:
 
 ```javascript
 function MyComponent({ someData }) {
-  return <ul>{someData.list.map(item => <li key={item.toString()}>{item}</li>)}</ul>
+  return <ul>{someData.list.map((item) => <li key={item.toString()}>{item}</li>)}</ul>;
 }
 
 function loadDataAsProps() {
   return {
-    someData: ({ isServer }) =>
-      (isServer ? { data: { list: [] }, status: 'loading' } : dispatch(loadSomeData()))
-  }
+    someData: ({ isServer }) => (isServer ? { data: { list: [] }, status: 'loading' } : dispatch(loadSomeData())),
+  };
 }
 ```
 
-### Synchronization
+#### Synchronization
 Let's say you have a dynamic dashboard of components that are all responsible for loading their own data, but you want to wait until they are all loaded to render them so that you don't see a bunch of spinners or a partially loaded page. Since Iguazu attaches the loadDataAsProps function as a static, parent components can easily wait until their children's data is loaded before rendering them.
 
 ```javascript
@@ -124,28 +176,28 @@ import ComponentB from './ComponentB';
 
 function MyComponent({ isLoading }) {
   if (isLoading()) {
-    return <div>Loading...</div>
+    return (<div>Loading...</div>);
   }
 
   return (
     <div>
       <ComponentA someParam="someParam" />
       <ComponentB />
-    <div>
+    </div>
   );
 }
 
 function loadDataAsProps({ store, ownProps }) {
   return {
     ComponentA: () => iguazuReduce(ComponentA.loadDataAsProps)({
-      store, ownProps: { someParam: 'someParam' }
+      store, ownProps: { someParam: 'someParam' },
     }),
-    ComponentB: () => iguazuReduce(ComponentB.loadDataAsProps)({ store, ownProps: {} })
-  }
+    ComponentB: () => iguazuReduce(ComponentB.loadDataAsProps)({ store, ownProps: {} }),
+  };
 }
 ```
 
-### Sequencing
+#### Sequencing
 
 Quite often you need the results of one asynchronous call to get the inputs for another call. One way to do this is by simply using components.
 
@@ -177,7 +229,7 @@ function parentLoadDataAsProps({ store: { dispatch } }) {
   };
 }
 
-const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent)
+const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent);
 
 function Kids({ isLoading, kids }) {
   if (isLoading()) {
@@ -198,15 +250,23 @@ function kidsLoadDataAsProps({ store: { dispatch }, ownProps: { parentId } }) {
   };
 }
 
-const KidsContainer = connectAsync({ loadDataAsProps: kidsLoadDataAsProps })(Kids)
+const KidsContainer = connectAsync({ loadDataAsProps: kidsLoadDataAsProps })(Kids);
 
 function PersonInfo({ info: { name, age } }) {
-  return {
+  return (
     <div>
-      <span>name: {name}</span>
-      <span>age: {age}</span>
+      <span>
+        name:
+        {' '}
+        {name}
+      </span>
+      <span>
+        age:
+        {' '}
+        {age}
+      </span>
     </div>
-  }
+  );
 }
 ```
 
@@ -237,15 +297,15 @@ function Parent({ isLoading, parent, kids }) {
 function parentLoadDataAsProps({ store: { dispatch } }) {
   const sequenceLoadFunctions = sequence([
     { key: 'parent', handler: () => dispatch(loadLoggedInParent()) },
-    { key: 'kids', handler: ({ parent }) => dispatch(loadKidsByParent(parent.id)) }
+    { key: 'kids', handler: ({ parent }) => dispatch(loadKidsByParent(parent.id)) },
   ]);
 
   return {
-    ...sequenceLoadFunctions
+    ...sequenceLoadFunctions,
   };
 }
 
-const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent)
+const ParentContainer = connectAsync({ loadDataAsProps: parentLoadDataAsProps })(Parent);
 
 function Kids({ kids }) {
   return (
@@ -257,12 +317,18 @@ function Kids({ kids }) {
 }
 
 function PersonInfo({ info: { name, age } }) {
-  return {
+  return (
     <div>
-      <span>name: {name}</span>
-      <span>age: {age}</span>
+      <span>
+        name:
+        {name}
+      </span>
+      <span>
+        age:
+        {age}
+      </span>
     </div>
-  }
+  );
 }
 
 ```
@@ -273,7 +339,7 @@ Sequenced function handlers are called with the results from all previous functi
 const sequenceLoadFunctions = sequence([
   { key: 'first', handler: () => dispatch(loadFirst()) },
   { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
-  { key: 'third', handler: ({ first, second }) => dispatch(loadThird(first.someParam, second.anotherParam)) }
+  { key: 'third', handler: ({ first, second }) => dispatch(loadThird(first.someParam, second.anotherParam)) },
 ]);
 ```
 
@@ -285,12 +351,12 @@ const sequenceLoadFunctions = sequence([
     key: 'first',
     handler: iguazuReduce(() => ({
       firstA: () => dispatch(loadFirstA()),
-      firstB: () => dispatch(loadFirstB())
-    }))
+      firstB: () => dispatch(loadFirstB()),
+    })),
   },
   {
-    key: 'second', handler: ({ first: { firstA, firstB } }) => dispatch(loadSecond(firstA, firstB))
-  }
+    key: 'second', handler: ({ first: { firstA, firstB } }) => dispatch(loadSecond(firstA, firstB)),
+  },
 ]);
 ```
 
@@ -303,11 +369,11 @@ previous results.
 const sequenceLoadFunctions = sequence([
   { key: 'first', handler: () => dispatch(loadFirst()) },
   { key: 'second', handler: noncritical(({ first }) => dispatch(loadSecond(first.someParam))) },
-  { key: 'unrelated', handler: () => dispatch(loadUnrelated())) },
+  { key: 'unrelated', handler: () => dispatch(loadUnrelated()) },
 ]);
-````
+```
 
-### Updating
+#### Updating
 
 Iguazu processes updates on Redux state changes by comparing the previous and next responses from `loadDataAsProps` using
 [shallowequal](https://www.npmjs.com/package/shallowequal) by default. You are able to declare a comparator function when
@@ -320,8 +386,8 @@ function loadDataAsProps({ store, ownProps }) {
   const { dispatch, getState } = store;
   return {
     myData: () => dispatch(queryToDeeplyNestedData(ownProps.someParam)),
-    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
-  }
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam)),
+  };
 }
 
 export default connectAsync({
@@ -330,7 +396,7 @@ export default connectAsync({
 })(MyContainer);
 ```
 
-### Limiting
+#### Limiting
 
 As some functions called within `loadDataAsProps` can be expensive when ran on every Redux state change, you are able to declare a limiter function when calling `connectAsync`. Calls to `loadDataAsProps` are not limited by default.
 
@@ -339,79 +405,99 @@ function loadDataAsProps({ store, ownProps }) {
   const { dispatch, getState } = store;
   return {
     myData: () => dispatch(expensiveQueryToData(ownProps.someParam)),
-    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
-  }
+    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam)),
+  };
 }
 
 export default connectAsync({
   loadDataAsProps,
-  stateChangeLimiter: onStateChange => debounce(onStateChange, 100),
+  stateChangeLimiter: (onStateChange) => debounce(onStateChange, 100),
 })(MyContainer);
 ```
 
-### Fetching On User Action
+#### Updating and Refreshing Data
 
-In the case that `loadDataAsProps` needs to be called on a user action, the initial render can be controlled by the result of the expected user input.
+In the case that we need to update a remote resource and refresh stale data:
 
 ```javascript
-/* ComponentA.jsx */
+/* MyUpdatingComponent.jsx */
 import React, { Component, Fragment } from 'react';
-import ComponentB from './ComponentB';
-
-export default class ComponentA extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { buttonClicked: false };
-  }
-
-  handleClick = () => this.setState({ buttonClicked: true });
-
-  render() {
-    const { buttonClicked } = this.state;
-    return (
-      <Fragment>
-        <button onClick={this.handleClick}>Click to Load</button>
-        {
-          buttonClicked && <ComponentB />
-        }
-      </Fragment>
-    )
-  }
-};
-
-/* ComponentB.jsx */
-import React from 'react';
+import { compose } from 'redux';
+import { connect } from 'react-redux';
 import { connectAsync } from 'iguazu';
 
-function ComponentB({ isLoading, loadedWithErrors, myData, myOtherData }) {
-  if (isLoading()) {
-    return <div>Loading...</div>
+import { getMyDataAction, updateMyDataAction } from './iguazuActionCreators';
+
+class MyUpdatingComponent extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { message: '' };
   }
 
-  if (loadedWithErrors()) {
-    return <div>Oh no! Something went wrong</div>
+  handleClick = () => {
+    const { updateMyData, getMyData } = this.props;
+    // Send updateMyData request
+    const { promise: updateMyDataPromise } = updateMyData('someParam');
+    return updateMyDataPromise
+      .then(() => {
+        // Refresh getMyData to get new results
+        const { promise: myDataPromise } = getMyData();
+        return myDataPromise;
+      })
+      .then(() => {
+        this.setState({ message: 'Success!' });
+      });
+  };
+
+  render() {
+    const { isLoading, loadedWithErrors, myData } = this.props;
+    const { message } = this.state;
+
+    if (isLoading()) {
+      return <div>Loading...</div>;
+    }
+
+    if (loadedWithErrors()) {
+      return <div>Oh no! Something went wrong</div>;
+    }
+
+    return (
+      <Fragment>
+        {message}
+        <button type="button" onClick={this.handleClick}>Update</button>
+        <h1>My Data</h1>
+        {myData}
+      </Fragment>
+    );
   }
+}
 
-  return <div>myData = {myData} myOtherData = {myOtherData}</div>
-};
-
-function loadDataAsProps({ store, ownProps }) {
-  const { dispatch, getState } = store;
+// Hook up action creator functions to props to call later
+function mapDispatchToProps(dispatch) {
   return {
-    myData: () => {
-      if (!ownProps.someParam) {
-        return { status: 'complete', promise: Promise.resolve() }; // data & error should be undefined.
-      }
-      return dispatch(queryMyData(ownProps.someParam));
-    },
-    myOtherData: () => dispatch(queryMyOtherData(getState().someOtherParam))
-  }
-};
+    // Update some remote resource
+    updateMyData: (someParam) => dispatch(updateMyDataAction(someParam)),
+    // Fetch some remote resource
+    getMyData: () => dispatch(getMyDataAction()),
+  };
+}
 
-export default connectAsync({ loadDataAsProps })(ComponentB);
+// Hook up data dispatches on component load
+function loadDataAsProps({ store }) {
+  const { dispatch } = store;
+  return {
+    // Fetch some remote resource and inject it into props as myData
+    myData: () => dispatch(getMyDataAction()),
+  };
+}
+
+export default compose(
+  connect(undefined, mapDispatchToProps),
+  connectAsync({ loadDataAsProps })
+)(MyUpdatingComponent);
 ```
 
-## Global Configuration
+#### Global Configuration
 
 Iguazu is also capable of consuming global configuration that will be applied to all instances of `connectAsync`. These options will be applied unless otherwise overridden by providing the equivalent setting in the `connectAsync` call.
 
@@ -421,43 +507,43 @@ import { configureIguazu } from 'iguazu';
 
 configureIguazu({
   stateChangeComparator: shallowEqual, // applied globally.
-  stateChangeLimiter: onStateChange => debounce(onStateChange, 100), // applied globally.
+  stateChangeLimiter: (onStateChange) => debounce(onStateChange, 100), // applied globally.
 });
 
-...
+/* ... */
 
 function loadDataAsProps({ store, ownProps }) {
   const { dispatch, getState } = store;
   return {
-    myData: () => dispatch(queryToDeeplyNestedData(ownProps.someParam)),,
-    myOtherData: () => dispatch(expensiveQueryToData(ownProps.someParam))
-  }
+    myData: () => dispatch(queryToDeeplyNestedData(ownProps.someParam)),
+    myOtherData: () => dispatch(expensiveQueryToData(ownProps.someParam)),
+  };
 }
 
 export default connectAsync({
   loadDataAsProps,
   stateChangeComparator: deepEqual, // override global setting.
-  stateChangeLimiter: onStateChange => debounce(onStateChange, 500), // override global setting.
+  stateChangeLimiter: (onStateChange) => debounce(onStateChange, 500), // override global setting.
 })(MyContainer);
 ```
 
-## Known Issues
+#### Known Issues
 
 - Using `iguazuReduce` within a `sequence` returns the response to the next handler as an array if the data is not loaded. Pass in `promiseAsObject` to `iguazuReduce` to resolve until next major version.
 
 ```javascript
 const sequenceLoadFunctions = sequence([
-  { key: 'first', handler: () => iguazuReduce(ComponentA.loadDataAsProps, { promiseAsObject: true })({
-    store, ownProps: { someParam: 'someParam' }
-  }) },
+  {
+    key: 'first',
+    handler: () => iguazuReduce(ComponentA.loadDataAsProps, { promiseAsObject: true })({
+      store, ownProps: { someParam: 'someParam' },
+    }),
+  },
   { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
 ]);
 ```
 
-## Why is it called Iguazu?
-This library is all about helping you manage data flow from many different sources. Data flow -> water -> waterfalls -> Iguazu falls - the largest waterfalls system in the world. It could have been named something like react-redux-async, but Iguazu also expects a certain pattern, which means there could potentially be many libraries that follow this pattern that could plug in to Iguazu. A unique name will make them more discoverable. Also it sounds cool.
-
-## Upgrading
+## 🚀 Upgrading
 
 ### v2.x.x to v3.x.x
 
@@ -470,7 +556,41 @@ This library is all about helping you manage data flow from many different sourc
 - Removed `lodash` and decreased gzip bundle size from `~9.6kb` to `~4.5kb` gzipped.
 - Iguazu adapters remain compatible, just upgrade dependency on `iguazu` to `^3.0.0`.
 
-## Contributing
+## 📜 Available Scripts
+
+**`npm run lint`**
+
+Verifies that your code matches the American Express code style defined in
+[`eslint-config-amex`](https://github.com/americanexpress/eslint-config-amex).
+
+**`npm run build`**
+
+Runs `babel` to compile `src` files to transpiled JavaScript into `lib` using
+[`babel-preset-amex`](https://github.com/americanexpress/babel-preset-amex).
+
+**`npm test`**
+
+Runs unit tests **and** verifies the format of all commit messages on the current branch.
+
+**`npm posttest`**
+
+Runs linting on the current branch.
+
+## 🎣 Git Hooks
+
+These commands will be automatically run during normal git operations like committing code.
+
+**`pre-commit`**
+
+This hook runs `npm test` before allowing a commit to be checked in.
+
+**`commit-msg`**
+
+This hook verifies that your commit message matches the One Amex conventions. See the **commit
+message** section in the [contribution guidelines](./CONTRIBUTING.md).
+
+## 🏆 Contributing
+
 We welcome Your interest in the American Express Open Source Community on Github.
 Any Contributor to any Open Source Project managed by the American Express Open
 Source Community must accept and sign an Agreement indicating agreement to the
@@ -481,10 +601,12 @@ out the Agreement](https://cla-assistant.io/americanexpress/iguazu).
 
 Please feel free to open pull requests and see [CONTRIBUTING.md](./CONTRIBUTING.md) for commit formatting details.
 
-## License
-Any contributions made under this project will be governed by the [Apache License
-2.0](https://github.com/americanexpress/iguazu/blob/master/LICENSE.txt).
+## 🗝️ License
 
-## Code of Conduct
+Any contributions made under this project will be governed by the [Apache License
+2.0](./LICENSE.txt).
+
+## 🗣️ Code of Conduct
+
 This project adheres to the [American Express Community Guidelines](./CODE_OF_CONDUCT.md).
 By participating, you are expected to honor these guidelines.

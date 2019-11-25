@@ -19,8 +19,12 @@ import { ReactReduxContext } from 'react-redux';
 import hoistStatics from 'hoist-non-react-statics';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
-import { reduceData, reduceStatus, reduceErrors, reducePromise } from './reduce';
-import { handlePromiseRejection, pick, mapValues, isServer } from './utils';
+import {
+  reduceData, reduceStatus, reduceErrors, reducePromise,
+} from './reduce';
+import {
+  handlePromiseRejection, pick, mapValues, isServer,
+} from './utils';
 import config from './config';
 
 export default function connectAsync({
@@ -36,7 +40,7 @@ export default function connectAsync({
     if (isServer() && !ssrEnabled) {
       propResultMap = mapValues(propFuncs, () => ({ status: 'loading' }));
     } else {
-      propResultMap = mapValues(propFuncs, value => value({ isServer: isServer() }));
+      propResultMap = mapValues(propFuncs, (value) => value({ isServer: isServer() }));
     }
 
     const promise = reducePromise(propResultMap);
@@ -69,7 +73,7 @@ export default function connectAsync({
 
       componentDidMount() {
         this.mounted = true;
-        const store = this.props.reduxStore;
+        const { reduxStore: store } = this.props;
         const { stateChangeLimiter: globalStateChangeLimiter } = config;
         const stateChangeLimiter = localStateChangeLimiter || globalStateChangeLimiter;
         const onReduxStateChangeLimited = stateChangeLimiter(this.onReduxStateChange);
@@ -101,35 +105,38 @@ export default function connectAsync({
       }
 
       setStateIfNecessary(newState) {
+        const { data, status, errors } = this.state;
         const { stateChangeComparator: globalStateChangeComparator } = config;
         const stateChangeComparator = localStateChangeComparator || globalStateChangeComparator;
-        const dataIsEqual = stateChangeComparator(this.state.data, newState.data);
-        const statusIsEqual = stateChangeComparator(this.state.status, newState.status);
-        const errorsAreEqual = stateChangeComparator(this.state.errors, newState.errors);
+        const dataIsEqual = stateChangeComparator(data, newState.data);
+        const statusIsEqual = stateChangeComparator(status, newState.status);
+        const errorsAreEqual = stateChangeComparator(errors, newState.errors);
         if (!dataIsEqual || !statusIsEqual || !errorsAreEqual) {
           this.setState(newState);
         }
       }
 
-      isLoading(propsOfInterest) {
-        const loadStatusMap = this.state.status;
-        const statusesOfInterest =
-          Object.values(propsOfInterest ? pick(loadStatusMap, propsOfInterest) : loadStatusMap);
 
-        return statusesOfInterest.some(status => status === 'loading');
+      isLoading(propsOfInterest) {
+        const { status: loadStatusMap } = this.state;
+        const statusesOfInterest = Object.values(
+          propsOfInterest ? pick(loadStatusMap, propsOfInterest) : loadStatusMap
+        );
+        return statusesOfInterest.some((status) => status === 'loading');
       }
 
       loadedWithErrors(propsOfInterest) {
-        const loadErrorMap = this.state.errors;
-        const errorsOfInterest =
-          Object.values(propsOfInterest ? pick(loadErrorMap, propsOfInterest) : loadErrorMap);
-
-        return errorsOfInterest.some(error => error);
+        const { errors: loadErrorMap } = this.state;
+        const errorsOfInterest = Object.values(
+          propsOfInterest ? pick(loadErrorMap, propsOfInterest) : loadErrorMap
+        );
+        return errorsOfInterest.some((error) => error);
       }
 
       render() {
         const { data, status, errors } = this.state;
         const { reduxStore, ...restOfProps } = this.props;
+        /* eslint-disable react/jsx-props-no-spreading */
         return (
           <WrappedComponent
             {...data}
@@ -152,8 +159,7 @@ export default function connectAsync({
     };
     hoistStatics(ConnectAsync, WrappedComponent);
     ConnectAsync.loadDataAsProps = loadDataAsProps;
-    ConnectAsync.displayName =
-      `connectAsync(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+    ConnectAsync.displayName = `connectAsync(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
     function ReduxConsumerWrapper(props) {
       return (

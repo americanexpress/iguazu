@@ -42,7 +42,7 @@ FakeReduxContext.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
-const mountWithReduxContext = context => (jsx, options) => baseMount(
+const mountWithReduxContext = (context) => (jsx, options) => baseMount(
   <FakeReduxContext context={context}>
     {jsx}
   </FakeReduxContext>, options);
@@ -50,19 +50,19 @@ const mountWithReduxContext = context => (jsx, options) => baseMount(
 jest.mock('../src/config', () => ({
   // eslint-disable-next-line global-require
   stateChangeComparator: jest.fn(require('shallowequal')),
-  stateChangeLimiter: jest.fn(func => func),
+  stateChangeLimiter: jest.fn((func) => func),
 }));
 
 describe('connectAsync', () => {
   function reducer(state = { param: 'x', x: 'populated data' }, action) {
     switch (action.type) {
       case 'UPDATE_PARAM': {
-        return Object.assign({}, state, { param: action.param });
+        return { ...state, param: action.param };
       }
       case 'ADD_DATA': {
         const newData = {};
         newData[action.param] = action.data;
-        return Object.assign({}, state, newData);
+        return { ...state, ...newData };
       }
       default: {
         return state;
@@ -225,7 +225,7 @@ describe('connectAsync', () => {
 
   it('should catch promises during normal render cycle to avoid unhandledrejection', () => {
     const spy = jest.spyOn(utils, 'handlePromiseRejection');
-    const promise = Promise.reject('failed to load data');
+    const promise = Promise.reject(new Error('failed to load data'));
     const mockloadDataAsProps = () => ({ myAsyncData: () => ({ promise }) });
     const MockComponent = () => null;
     const MockContainer = connectAsync({ loadDataAsProps: mockloadDataAsProps })(MockComponent);
@@ -300,7 +300,7 @@ describe('connectAsync', () => {
       expect(config.stateChangeLimiter).toHaveBeenCalledWith(instance.onReduxStateChange);
     });
     it('applies a locally provided limiter on redux state change', () => {
-      const localStateChangeLimiter = jest.fn(func => func);
+      const localStateChangeLimiter = jest.fn((func) => func);
       const ContainerLimited = connectAsync({
         loadDataAsProps,
         stateChangeLimiter: localStateChangeLimiter,

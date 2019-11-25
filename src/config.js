@@ -17,7 +17,7 @@ import shallowequal from 'shallowequal';
 
 const config = {
   stateChangeComparator: shallowequal,
-  stateChangeLimiter: onStateChange => onStateChange,
+  stateChangeLimiter: (onStateChange) => onStateChange,
 };
 
 export function configureIguazu(customConfig) {

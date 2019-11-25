@@ -21,7 +21,7 @@ import {
   noncritical,
   sequence,
   configureIguazu,
-} from '../src/index';
+} from '../src';
 
 describe('Public API', () => {
   it('should expose the expected public API', () => {

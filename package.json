@@ -4,10 +4,32 @@
   "description": "An asynchronous data flow solution for React/Redux applications",
   "author": "Maia Teegarden",
   "contributors": [
-    "Nickolas Oliver <nickolas.oliver@aexp.com>",
-    "Andrew Curtis <andrew.curtis@aexp.com>",
-    "Michael Tomcal <michael.a.tomcal@aexp.com>"
+    "Andres Escobar <Andres.Escobar@aexp.com> (https://github.com/anescobar1991)",
+    "James Singleton <James.Singleton1@aexp.com> https://github.com/JamesSingleton)",
+    "Jimmy King  <Jimmy.King@aexp.com> (https://github.com/10xLaCroixDrinker)",
+    "Jonathan Adshead <Jonathan.Adshead@aexp.com> (https://github.com/JAdshead)",
+    "Michael Tobia <Michael.M.Tobia@aexp.com> (https://github.com/Francois-Esquire)",
+    "Michael Tomcal <Michael.A.Tomcal@aexp.com> (https://github.com/mtomcal))",
+    "Stephanie Coates  <Stephanie.Coates1@aexp.com> (https://github.com/stephaniecoates)",
+    "Nelly Kiboi <Nelly.J.Kiboi@aexp.com> (https://github.com/nellyk)",
+    "Nickolas Oliver <nickolas.oliver@aexp.com> (https://github.com/PixnBits)",
+    "Andrew Curtis <andrew.curtis@aexp.com> (https://github.com/drewcur)",
+    "Scott McIntyre <scott.mcintyre@aexp.com> (https://github.com/smackfu)"
   ],
+  "keywords": [
+    "async",
+    "react",
+    "redux",
+    "react-redux",
+    "fetch",
+    "data",
+    "query",
+    "promise"
+  ],
+  "homepage": "https://github.com/americanexpress/iguazu",
+  "bugs": {
+    "url": "https://github.com/americanexpress/iguazu/issues"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -16,9 +38,9 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
-    "lint": "eslint --ignore-path .gitignore --ext js,jsx .",
+    "lint": "eslint --ignore-path .gitignore --ext js,jsx,md .",
     "prepublish": "npm run build",
-    "test": "jest",
+    "test": "jest && commitlint --from origin/master --to HEAD",
     "posttest": "npm run lint"
   },
   "jest": {
@@ -28,27 +50,40 @@
     ]
   },
   "dependencies": {
-    "@babel/polyfill": "^7.2.5",
     "hoist-non-react-statics": "^3.3.0",
     "prop-types": "^15.5.10",
     "shallowequal": "^1.0.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.2.2",
+    "@babel/core": "^7.3.3",
+    "@babel/polyfill": "^7.2.5",
+    "@commitlint/cli": "^8.2.0",
+    "@commitlint/config-conventional": "^8.2.0",
+    "@semantic-release/changelog": "^3.0.5",
+    "@semantic-release/commit-analyzer": "^6.3.2",
+    "@semantic-release/git": "^7.0.18",
+    "@semantic-release/npm": "^5.3.4",
+    "@semantic-release/release-notes-generator": "^7.3.2",
+    "amex-jest-preset": "^5.0.0",
     "amex-jest-preset-react": "^5.0.1",
-    "babel-preset-amex": "^2.0.0",
+    "babel-jest": "^24.1.0",
+    "babel-preset-amex": "^3.2.0",
+    "core-js-compat": "3.4.5",
     "enzyme": "^3.1.1",
     "enzyme-to-json": "^3.2.1",
-    "eslint": "^4.18.2",
-    "eslint-config-amex": "^6.0.0",
+    "eslint": "^6.5.0",
+    "eslint-config-amex": "^11.1.0",
+    "husky": "^3.0.9",
     "jest": "^24.1.0",
+    "jest-fetch-mock": "^1.2.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "react-redux": "^7.1.1",
     "react-test-renderer": "^16.0.0",
     "redux": "^4.0.4",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "semantic-release": "^15.13.31"
   },
   "peerDependencies": {
     "react": "^16.0.0",
@@ -56,5 +91,21 @@
     "react-redux": "^7.1.1",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0"
+  },
+  "release": {
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/git",
+      "@semantic-release/npm"
+    ],
+    "branch": "master"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm test",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
   }
 }

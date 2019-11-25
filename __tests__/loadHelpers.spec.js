@@ -71,7 +71,7 @@ describe('', () => {
   describe('noncritical', () => {
     it('should catch the promise so it does not cause Promise.all to reject', async () => {
       const loadFunc = () => {
-        const promise = Promise.reject('rejected!');
+        const promise = Promise.reject(new Error('rejected!'));
         return { promise };
       };
       await expect(noncritical(loadFunc)().promise).resolves.toBeUndefined();
@@ -90,7 +90,7 @@ describe('', () => {
         { key: 'seq3', handler: seq3 },
       ]);
 
-      const resultMap = mapValues(sequenceFuncs, value => value());
+      const resultMap = mapValues(sequenceFuncs, (value) => value());
       await Promise.all(Object.values(resultMap).map(({ promise }) => promise));
 
       expect(seq1).toHaveBeenCalled();
@@ -109,7 +109,7 @@ describe('', () => {
         { key: 'seq3', handler: seq3 },
       ]);
 
-      const resultMap = mapValues(sequenceFuncs, value => value());
+      const resultMap = mapValues(sequenceFuncs, (value) => value());
 
       const seq2Resolve = await resultMap.seq2.promise;
       expect(seq2Resolve).toEqual({ seq1: 'seq1 data', seq2: 'seq2 data' });
@@ -131,7 +131,7 @@ describe('', () => {
         { key: 'seq2', handler: seq2 },
       ]);
 
-      const resultMap = mapValues(sequenceFuncs, value => value());
+      const resultMap = mapValues(sequenceFuncs, (value) => value());
       try {
         await Promise.all(Object.values(resultMap).map(({ promise }) => promise));
       } catch (err) {
@@ -153,7 +153,7 @@ describe('', () => {
         { key: 'seq2', handler: seq2 },
       ]);
 
-      const resultMap = mapValues(sequenceFuncs, value => value());
+      const resultMap = mapValues(sequenceFuncs, (value) => value());
 
       const seq2Resolve = await resultMap.seq2.promise;
       expect(seq2Resolve).toEqual({ seq1: undefined, seq2: 'seq2 data' });
@@ -172,7 +172,7 @@ describe('', () => {
         key: 'seq2', handler: seq2,
       }]);
 
-      mapValues(sequenceFuncs, value => value());
+      mapValues(sequenceFuncs, (value) => value());
       expect(seq2).toHaveBeenCalledWith({ seq1: { seq1A: 'seq1A data', seq1B: 'seq1B data' } });
     });
 
@@ -188,7 +188,7 @@ describe('', () => {
         key: 'seq2', handler: seq2,
       }]);
 
-      const seqValues = mapValues(sequenceFuncs, value => value());
+      const seqValues = mapValues(sequenceFuncs, (value) => value());
       const seqPromises = Object.values(seqValues).map(({ promise }) => promise);
       await Promise.all(seqPromises);
       expect(seq2).toHaveBeenCalledWith({ seq1: { seq1A: 'seq1A data', seq1B: 'seq1B data' } });
