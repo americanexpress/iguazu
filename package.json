@@ -1,6 +1,6 @@
 {
   "name": "iguazu",
-  "version": "2.5.2",
+  "version": "2.6.2",
   "description": "An asynchronous data flow solution for React/Redux applications",
   "author": "Maia Teegarden",
   "contributors": [
