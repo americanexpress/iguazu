@@ -302,8 +302,8 @@ previous results.
 ```javascript
 const sequenceLoadFunctions = sequence([
   { key: 'first', handler: () => dispatch(loadFirst()) },
-  { key: 'second', handler: ({ first }) => dispatch(loadSecond(first.someParam)) },
-  { key: 'unrelated', handler: noncritical(() => dispatch(loadUnrelated())) },
+  { key: 'second', handler: noncritical(({ first }) => dispatch(loadSecond(first.someParam))) },
+  { key: 'unrelated', handler: () => dispatch(loadUnrelated())) },
 ]);
 ````
 
