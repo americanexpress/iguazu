@@ -13,10 +13,10 @@ jobs:
       node_js:
         - 10
         - 12
-      deploy:
-        on:
-          branch: master
-        provider: script
-        skip_cleanup: true
-        script:
-          - npx semantic-release
+      # deploy:
+      #   on:
+      #     branch: master
+      #   provider: script
+      #   skip_cleanup: true
+      #   script:
+      #     - npx semantic-release
