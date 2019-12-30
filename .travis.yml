@@ -5,7 +5,7 @@ node_js:
 before_install:
   # Create a master branch for commitlint
   # https://github.com/conventional-changelog/commitlint/issues/6
-  - git remote set-branches origin master && git fetch
+  - git remote set-branches origin 2.x && git fetch
 jobs:
   include:
     # Define the release stage that runs semantic-release
