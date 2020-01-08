@@ -15,7 +15,7 @@ jobs:
         - 12
       deploy:
         on:
-          branch: master
+          branch: 2.x
         provider: script
         skip_cleanup: true
         script:
