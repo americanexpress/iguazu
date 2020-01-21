@@ -41,7 +41,8 @@
     "lint": "eslint --ignore-path .gitignore --ext js,jsx,md .",
     "prepublish": "npm run build",
     "test": "jest && commitlint --from origin/master --to HEAD",
-    "posttest": "npm run lint"
+    "test:lockfile": "lockfile-lint -p package-lock.json -t npm -a npm -o https: -c -i",
+    "posttest": "npm run lint && npm run test:lockfile"
   },
   "jest": {
     "preset": "amex-jest-preset-react",
@@ -77,6 +78,7 @@
     "husky": "^3.0.9",
     "jest": "^24.1.0",
     "jest-fetch-mock": "^1.2.0",
+    "lockfile-lint": "^3.0.8",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "react-redux": "^7.1.1",
