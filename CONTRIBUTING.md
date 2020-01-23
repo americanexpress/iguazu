@@ -37,18 +37,19 @@ This project adheres to the American Express [Code of Conduct](./CODE_OF_CONDUCT
 
 4. You can now run any of this scripts from the root folder.
 
-#### Running tests
-
-
-- `npm run lint`
-
-Verifies that your code matches the American Express code style defined in
-[`eslint-config-amex`](https://github.com/americanexpress/eslint-config-amex).
+#### Running and cleaning the build files
 
 - `npm run build`
 
 Runs `babel` to compile `src` files to transpiled JavaScript into `lib` using
 [`babel-preset-amex`](https://github.com/americanexpress/babel-preset-amex).
+
+#### Running tests
+
+- `npm run lint`
+
+Verifies that your code matches the American Express code style defined in
+[`eslint-config-amex`](https://github.com/americanexpress/eslint-config-amex).
 
 - `npm test`
 
@@ -61,7 +62,7 @@ Runs linting on the current branch and checks that the commits follow [conventio
 
 ## Submitting a new feature
 
-When submitting a new feature request or enhancement of an existing features please review the following:-
+When submitting a new feature request or enhancement of an existing feature please review the following:-
 
 ### Is your feature request related to a problem
 
