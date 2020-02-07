@@ -62,7 +62,7 @@ Runs linting on the current branch and checks that the commits follow [conventio
 
 ## Submitting a new feature
 
-When submitting a new feature request or enhancement of an existing feature please review the following:-
+When submitting a new feature request or enhancement of an existing feature please review the following:
 
 ### Is your feature request related to a problem
 
