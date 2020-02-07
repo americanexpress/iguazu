@@ -39,25 +39,25 @@ This project adheres to the American Express [Code of Conduct](./CODE_OF_CONDUCT
 
 #### Running and cleaning the build files
 
-- `npm run build`
+- **`npm run build`**
 
 Runs `babel` to compile `src` files to transpiled JavaScript into `lib` using
 [`babel-preset-amex`](https://github.com/americanexpress/babel-preset-amex).
 
 #### Running tests
 
-- `npm run lint`
+- **`npm run lint`**
 
 Verifies that your code matches the American Express code style defined in
 [`eslint-config-amex`](https://github.com/americanexpress/eslint-config-amex).
 
-- `npm test`
+- **`npm test`**
 
 Runs unit tests **and** verifies the format of all commit messages on the current branch.
 
-- `npm posttest`
+- **`npm posttest`**
 
-Runs linting on the current branch and checks that the commits follow [conventional commits](https://www.conventionalcommits.org/)
+Runs linting on the current branch, checks that the commits follow [conventional commits](https://www.conventionalcommits.org/) and verifies that the `package-lock.json` file includes public NPM registry URLs.
 
 
 ## Submitting a new feature
