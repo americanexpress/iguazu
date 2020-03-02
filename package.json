@@ -1,6 +1,6 @@
 {
   "name": "iguazu",
-  "version": "3.0.0-3",
+  "version": "3.0.1",
   "description": "An asynchronous data flow solution for React/Redux applications",
   "author": "Maia Teegarden",
   "contributors": [
@@ -99,8 +99,8 @@
       "@semantic-release/commit-analyzer",
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
-      "@semantic-release/git",
-      "@semantic-release/npm"
+      "@semantic-release/npm",
+      "@semantic-release/git"
     ],
     "branch": "master"
   },

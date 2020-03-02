@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/americanexpress/iguazu/compare/v3.0.0...v3.0.1) (2020-03-02)
+
+
+### Bug Fixes
+
+* **release:** needs to update package json version ([260ff6b](https://github.com/americanexpress/iguazu/commit/260ff6bc1e8cd555d77d059771a9971f331e4eab))
+
 # [3.0.0](https://github.com/americanexpress/iguazu/compare/v2.5.2...v3.0.0) (2020-01-08)
 
 
