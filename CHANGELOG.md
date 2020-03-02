@@ -1,3 +1,10 @@
+## [3.0.2](https://github.com/americanexpress/iguazu/compare/v3.0.1...v3.0.2) (2020-03-02)
+
+
+### Bug Fixes
+
+* **reduce:** handle reduced promise rejection ([7789c44](https://github.com/americanexpress/iguazu/commit/7789c44bcdbe76dbc337f1420a6374b9c90b8d77))
+
 ## [3.0.1](https://github.com/americanexpress/iguazu/compare/v3.0.0...v3.0.1) (2020-03-02)
 
 
