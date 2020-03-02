@@ -129,6 +129,16 @@ describe('reducers', () => {
       expect(promiseResults).toEqual(expect.arrayContaining(['x result', 'y result']));
     });
 
+    it('should catch promises during normal render cycle to avoid unhandledrejection', () => {
+      const spy = jest.spyOn(utils, 'handlePromiseRejection');
+      const loadDataAsProps = () => ({
+        x: () => ({ data: 'x data', status: 'complete', promise: Promise.resolve('x result') }),
+        y: () => ({ status: 'loading', promise: Promise.reject(new Error('y rejected')) }),
+      });
+      const { promise } = iguazuReduce(loadDataAsProps)();
+      expect(spy).toHaveBeenCalledWith(promise);
+    });
+
     it('should return promise as object if \'promiseAsObject\' option supplied', async () => {
       const loadDataAsProps = () => ({
         x: () => ({ data: 'x data', status: 'complete', promise: Promise.resolve('x result') }),

@@ -14,7 +14,12 @@
  * permissions and limitations under the License.
  */
 
-import { mapValues, zipObject, isServer } from './utils';
+import {
+  mapValues,
+  zipObject,
+  isServer,
+  handlePromiseRejection,
+} from './utils';
 
 export function reduceData(loadResponseMap) {
   return mapValues(loadResponseMap, (response) => response.data);
@@ -70,6 +75,8 @@ export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {})
     const promise = promiseAsObject
       ? reducePromiseObject(loadResponseMap)
       : reducePromise(loadResponseMap);
+
+    handlePromiseRejection(promise);
 
     return {
       data,
