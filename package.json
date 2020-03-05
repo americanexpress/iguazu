@@ -40,7 +40,8 @@
     "build": "babel src --out-dir lib",
     "lint": "eslint --ignore-path .gitignore --ext js,jsx,md .",
     "prepublish": "npm run build",
-    "test": "jest && commitlint --from origin/master --to HEAD",
+    "test": "jest && npm run test:git-history",
+    "test:git-history": "commitlint --from origin/master --to HEAD",
     "test:lockfile": "lockfile-lint -p package-lock.json -t npm -a npm -o https: -c -i",
     "posttest": "npm run lint && npm run test:lockfile"
   },
