@@ -9,6 +9,10 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      output1: ${{ steps.unit_tests.outputs.test }}
+      output2: ${{ steps.git_history_test.outputs.test }}
     strategy:
       matrix:
         node: [ '10.x', '12.x', '14.x' ]
@@ -27,11 +31,13 @@ jobs:
       env:
         NODE_ENV: development
     - name: Unit Tests
+      id: unit_tests
       run: ./node_modules/.bin/jest
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Git History Test
+      id: git_history_test
       run: npm run test:git-history
       env:
         NODE_ENV: production
@@ -46,3 +52,8 @@ jobs:
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+    - run: echo ${{needs.tests.outputs.output1}} ${{needs.tests.outputs.output2}}
