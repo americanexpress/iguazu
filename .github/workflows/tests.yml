@@ -1,4 +1,4 @@
-name: CI/CD
+name: Tests
 
 on:
   push:
@@ -46,8 +46,3 @@ jobs:
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  release:
-    runs-on: ubuntu-latest
-    needs: tests
-    steps:
-    - run: echo Ran After Tests
