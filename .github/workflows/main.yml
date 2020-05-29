@@ -1,4 +1,4 @@
-name: Run Tests
+name: CI/CD
 
 on:
   push:
@@ -7,11 +7,11 @@ on:
   pull_request:
 
 jobs:
-  test:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [ '12.x', '14.x' ]
+        node: [ '10.x', '12.x', '14.x' ]
     name: Node ${{ matrix.node }}
     steps:
     - uses: actions/checkout@v2
@@ -27,7 +27,7 @@ jobs:
       env:
         NODE_ENV: development
     - name: Unit Tests
-      run: npm test
+      run: ./node_modules/.bin/jest
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,6 +38,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Lockfile Lint Test
       run: npm run test:lockfile
+      env:
+        NODE_ENV: production
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Lint
+      run: npm run lint
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
