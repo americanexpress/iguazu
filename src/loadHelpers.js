@@ -21,7 +21,7 @@ export function defer(func) {
     return func;
   }
 
-  return () => ({ status: 'loading', noncritical: true });
+  return () => ({ status: 'loading', promise: Promise.resolve(), noncritical: true });
 }
 
 export function noncritical(func) {
