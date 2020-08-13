@@ -6,10 +6,15 @@ on:
       - master
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: "! contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - run: echo "${{ github.event.head_commit.message }}"
   release:
+    needs: prepare
     name: Release
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged && github.base_ref == 'master' && !contains(github.event.head_commit.message, '[skip ci]')
     steps:
       - name: Checkout
         uses: actions/checkout@v2
