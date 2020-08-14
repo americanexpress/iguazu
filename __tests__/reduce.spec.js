@@ -15,6 +15,7 @@
  */
 
 import { enableSSR, resetSSR } from '../src/ssr';
+import * as utils from '../src/utils';
 
 import iguazuReduce, {
   reduceData,
@@ -126,6 +127,16 @@ describe('reducers', () => {
       expect(reducedLoadResponse.status).toBe('loading');
       const promiseResults = await reducedLoadResponse.promise;
       expect(promiseResults).toEqual(['x result', 'y result']);
+    });
+
+    it('should catch promises during normal render cycle to avoid unhandledrejection', () => {
+      const spy = jest.spyOn(utils, 'handlePromiseRejection');
+      const loadDataAsProps = () => ({
+        x: () => ({ data: 'x data', status: 'complete', promise: Promise.resolve('x result') }),
+        y: () => ({ status: 'loading', promise: Promise.reject('y rejected') }),
+      });
+      const { promise } = iguazuReduce(loadDataAsProps)();
+      expect(spy).toHaveBeenCalledWith(promise);
     });
 
     it('should return promise as object if \'promiseAsObject\' option supplied', async () => {

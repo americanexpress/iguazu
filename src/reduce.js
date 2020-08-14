@@ -19,6 +19,7 @@ import mapValues from 'lodash/mapValues';
 import zipObject from 'lodash/zipObject';
 
 import { isSSR } from './ssr';
+import { handlePromiseRejection } from './utils';
 
 export function reduceData(loadResponseMap) {
   return mapValues(loadResponseMap, response => response.data);
@@ -77,6 +78,8 @@ export default function iguazuReduce(loadFunc, { promiseAsObject = false } = {})
     const promise = promiseAsObject
       ? reducePromiseObject(loadResponseMap)
       : reducePromise(loadResponseMap);
+
+    handlePromiseRejection(promise);
 
     return {
       data,
