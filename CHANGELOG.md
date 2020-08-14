@@ -1,3 +1,15 @@
+# [3.1.0](https://github.com/americanexpress/iguazu/compare/v3.0.2...v3.1.0) (2020-08-14)
+
+
+### Bug Fixes
+
+* **release:** fix release process ([b35f735](https://github.com/americanexpress/iguazu/commit/b35f735d76030234334be45716d1d84c0fe5cde3))
+
+
+### Features
+
+* **loadHelpers:** return promise from defer ([da93881](https://github.com/americanexpress/iguazu/commit/da93881ca5a4f48e7ea0efe07979783091fae256))
+
 ## [3.0.2](https://github.com/americanexpress/iguazu/compare/v3.0.1...v3.0.2) (2020-03-02)
 
 
