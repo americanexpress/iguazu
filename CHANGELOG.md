@@ -1,3 +1,10 @@
+# [2.8.0](https://github.com/americanexpress/iguazu/compare/v2.7.0...v2.8.0) (2020-08-17)
+
+
+### Features
+
+* **defer:** release defer load helper ([bf51cb9](https://github.com/americanexpress/iguazu/commit/bf51cb9b2bcb1a254c363db9fce98734d59857e0))
+
 # [2.7.0](https://github.com/americanexpress/iguazu/compare/v2.6.4...v2.7.0) (2020-08-14)
 
 
