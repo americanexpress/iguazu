@@ -43,22 +43,23 @@
     "shallowequal": "^1.0.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
     "@semantic-release/changelog": "^3.0.5",
     "@semantic-release/commit-analyzer": "^6.3.2",
     "@semantic-release/git": "^7.0.18",
+    "@semantic-release/github": "^7.0.7",
     "@semantic-release/npm": "^5.3.4",
     "@semantic-release/release-notes-generator": "^7.3.2",
-    "semantic-release": "^15.13.31",
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.2.2",
     "amex-jest-preset-react": "^5.0.1",
     "babel-preset-amex": "^2.0.0",
     "enzyme": "^3.1.1",
     "enzyme-to-json": "^3.2.1",
     "eslint": "^4.18.2",
     "eslint-config-amex": "^6.0.0",
+    "husky": "^3.0.9",
     "jest": "^24.1.0",
     "react": "^16.0.0",
     "react-async-bootstrapper": "^1.1.1",
@@ -67,7 +68,7 @@
     "react-test-renderer": "^16.0.0",
     "redux": "^3.6.0",
     "redux-thunk": "^2.2.0",
-    "husky": "^3.0.9"
+    "semantic-release": "^15.13.31"
   },
   "peerDependencies": {
     "react": "^16.0.0"
@@ -78,7 +79,8 @@
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       "@semantic-release/npm",
-      "@semantic-release/git"
+      "@semantic-release/git",
+      "@semantic-release/github"
     ],
     "branch": "2.x"
   },
