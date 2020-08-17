@@ -9,3 +9,5 @@ CODEOWNERS
 *.tgz
 test-setup.js
 .jest-cache
+.github
+commitlint.config.js
