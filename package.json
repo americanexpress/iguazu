@@ -26,7 +26,8 @@
     "build": "babel src --out-dir lib",
     "lint": "eslint --ignore-path .gitignore --ext js,jsx .",
     "prepublish": "npm run build",
-    "test": "jest && commitlint --from origin/2.x --to HEAD",
+    "test": "jest && npm run test:git-history",
+    "test:git-history": "commitlint --from origin/2.x --to HEAD",
     "posttest": "npm run lint"
   },
   "jest": {
