@@ -3,7 +3,7 @@ name: Tests
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   tests:
@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: |
-        git remote set-branches --add origin master
+        git remote set-branches --add origin main
         git fetch
     - name: Setup Node
       uses: actions/setup-node@v1

@@ -7,7 +7,7 @@
 </h1>
 
 [![npm version](https://badge.fury.io/js/iguazu.svg)](https://badge.fury.io/js/iguazu)
-[![Build Status](https://travis-ci.org/americanexpress/iguazu.svg?branch=master)](https://travis-ci.org/americanexpress/iguazu)
+![Main Health Check](https://github.com/americanexpress/iguazu/workflows/Main%20Health%20Check/badge.svg)
 
 > Iguazu is a simple Redux-powered Async Query engine. By using a
 > Higher-Order Component, Iguazu transparently manages dispatching async
