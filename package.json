@@ -62,11 +62,11 @@
     "@babel/polyfill": "^7.2.5",
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
-    "@semantic-release/changelog": "^3.0.5",
-    "@semantic-release/commit-analyzer": "^6.3.2",
-    "@semantic-release/git": "^7.0.18",
-    "@semantic-release/npm": "^5.3.4",
-    "@semantic-release/release-notes-generator": "^7.3.2",
+    "@semantic-release/changelog": "^5.0.1",
+    "@semantic-release/commit-analyzer": "^8.0.1",
+    "@semantic-release/git": "^9.0.0",
+    "@semantic-release/npm": "^7.0.6",
+    "@semantic-release/release-notes-generator": "^9.0.1",
     "amex-jest-preset-react": "^6.1.0",
     "babel-jest": "^24.1.0",
     "babel-preset-amex": "^3.2.0",
@@ -85,7 +85,7 @@
     "react-test-renderer": "^16.0.0",
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
-    "semantic-release": "^15.13.31"
+    "semantic-release": "^17.2.1"
   },
   "peerDependencies": {
     "react": "^16.0.0",
