@@ -27,7 +27,7 @@ const { mapValues } = utils;
 
 const isServer = jest.spyOn(utils, 'isServer');
 
-describe('', () => {
+describe('loadHelpers', () => {
   afterEach(() => {
     isServer.mockImplementation(() => false);
   });
@@ -41,9 +41,7 @@ describe('', () => {
       return { data, status, promise };
     });
 
-    beforeEach(() => {
-      loadFunc.mockClear();
-    });
+    beforeEach(loadFunc.mockClear);
 
     it('should skip the load function and just return a loading response when on server', async () => {
       isServer.mockImplementation(() => true);
@@ -55,7 +53,7 @@ describe('', () => {
       expect(loadResponse.data).not.toBeDefined();
       expect(loadResponse.status).toBe('loading');
       expect(loadResponse.promise).toBeInstanceOf(Promise);
-      expect(loadResponse.promise).resolves.toBeUndefined();
+      await expect(loadResponse.promise).resolves.toBeUndefined();
     });
 
     it('should use the wrapped load function when not on the server', async () => {
@@ -67,7 +65,7 @@ describe('', () => {
       expect(loadResponse.data).toBe('x data');
       expect(loadResponse.status).toBe('complete');
       expect(loadResponse.promise).toBeInstanceOf(Promise);
-      expect(loadResponse.promise).resolves.toEqual('x data');
+      await expect(loadResponse.promise).resolves.toEqual('x data');
     });
   });
 
@@ -126,7 +124,8 @@ describe('', () => {
     it('should handle a previous function that had an error', async () => {
       expect.assertions(4);
       const error = new Error('woops');
-      const seq1 = jest.fn(() => ({ status: 'complete', error, promise: Promise.reject() }));
+      const rejectPromise = Promise.reject();
+      const seq1 = jest.fn(() => ({ status: 'complete', error, promise: rejectPromise }));
       const seq2 = jest.fn();
 
       const sequenceFuncs = sequence([
@@ -135,15 +134,14 @@ describe('', () => {
       ]);
 
       const resultMap = mapValues(sequenceFuncs, (value) => value());
-      try {
-        await Promise.all(Object.values(resultMap).map(({ promise }) => promise));
-      } catch (err) {
-        expect(resultMap.seq1).toEqual({ status: 'complete', error, promise: Promise.reject() });
-        expect(resultMap.seq2).toEqual({ status: 'complete', error, promise: Promise.reject() });
 
-        expect(seq1).toHaveBeenCalled();
-        expect(seq2).not.toHaveBeenCalled();
-      }
+      await Promise.all(Object.values(resultMap).map(({ promise }) => promise)).catch(() => 0);
+
+      expect(resultMap.seq1).toEqual({ status: 'complete', error, promise: rejectPromise });
+      expect(resultMap.seq2).toEqual({ status: 'complete', error, promise: rejectPromise });
+
+      expect(seq1).toHaveBeenCalled();
+      expect(seq2).not.toHaveBeenCalled();
     });
 
     it('should handle a previous function that had a noncritical error', async () => {

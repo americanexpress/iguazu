@@ -4,8 +4,8 @@ import {
 
 describe('utils', () => {
   describe('handlePromiseRejection', () => {
-    it('should swallow a rejected promise', () => {
-      expect(handlePromiseRejection(Promise.reject())).resolves.toBe(undefined);
+    it('should swallow a rejected promise', async () => {
+      await expect(handlePromiseRejection(Promise.reject())).resolves.toBe(undefined);
     });
   });
   describe('pick', () => {

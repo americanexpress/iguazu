@@ -14,8 +14,6 @@
  * permissions and limitations under the License.
  */
 
-
-// eslint-disable-next-line import/prefer-default-export
 export function handlePromiseRejection(promise) {
   return promise.then(null, () => { /* swallow */ });
 }

@@ -14,6 +14,8 @@
  * permissions and limitations under the License.
  */
 
+/* eslint-disable react/jsx-props-no-spreading -- HOCs require spreading unknown props */
+
 import React from 'react';
 import { ReactReduxContext } from 'react-redux';
 import hoistStatics from 'hoist-non-react-statics';
@@ -78,11 +80,11 @@ export default function connectAsync({
         const stateChangeLimiter = localStateChangeLimiter || globalStateChangeLimiter;
         const onReduxStateChangeLimited = stateChangeLimiter(this.onReduxStateChange);
         this.unsubscribe = store.subscribe(
-          () => (this.mounted && onReduxStateChangeLimited())
+          () => this.mounted && onReduxStateChangeLimited()
         );
       }
 
-      // eslint-disable-next-line camelcase
+      // eslint-disable-next-line camelcase -- API is not camelCase
       UNSAFE_componentWillReceiveProps(nextProps) {
         const { reduxStore, ...restOfProps } = this.props;
         const { reduxStore: nextReduxStore, ...nextRestOfProps } = nextProps;
@@ -116,7 +118,6 @@ export default function connectAsync({
         }
       }
 
-
       isLoading(propsOfInterest) {
         const { status: loadStatusMap } = this.state;
         const statusesOfInterest = Object.values(
@@ -136,7 +137,6 @@ export default function connectAsync({
       render() {
         const { data, status, errors } = this.state;
         const { reduxStore, ...restOfProps } = this.props;
-        /* eslint-disable react/jsx-props-no-spreading */
         return (
           <WrappedComponent
             {...data}
@@ -175,3 +175,5 @@ export default function connectAsync({
     return ReduxConsumerWrapper;
   };
 }
+
+/* eslint-enable react/jsx-props-no-spreading -- HOCs require spreading unknown props */
