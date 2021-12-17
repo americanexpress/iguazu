@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/americanexpress/iguazu/compare/v3.1.0...v3.2.0) (2021-12-17)
+
+
+### Features
+
+* **peerDeps:** more permissive react compatibility ([63012d0](https://github.com/americanexpress/iguazu/commit/63012d0f28fdc720f9d05122e0865dacd147ae8f))
+
 # [3.1.0](https://github.com/americanexpress/iguazu/compare/v3.0.2...v3.1.0) (2020-08-14)
 
 
