@@ -48,8 +48,7 @@ const mountWithReduxContext = (context) => (jsx, options) => baseMount(
   </FakeReduxContext>, options);
 
 jest.mock('../src/config', () => ({
-  // eslint-disable-next-line global-require
-  stateChangeComparator: jest.fn(require('shallowequal')),
+  stateChangeComparator: jest.fn(jest.requireActual('shallowequal')),
   stateChangeLimiter: jest.fn((func) => func),
 }));
 

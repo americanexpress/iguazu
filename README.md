@@ -238,7 +238,7 @@ function Kids({ isLoading, kids }) {
   return (
     <div>
       Kids:
-      {kids.map((kid) => (<PersonInfo info={kid} />))}
+      {kids.map((kid) => (<PersonInfo key={kid.name} info={kid} />))}
     </div>
   );
 }
@@ -310,7 +310,7 @@ function Kids({ kids }) {
   return (
     <div>
       Kids:
-      {kids.map((kid) => (<PersonInfo info={kid} />))}
+      {kids.map((kid) => (<PersonInfo key={kid.name} info={kid} />))}
     </div>
   );
 }
