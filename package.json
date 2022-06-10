@@ -88,7 +88,7 @@
     "redux": "^4.0.4",
     "redux-thunk": "^2.3.0",
     "regenerator-runtime": "^0.13.9",
-    "semantic-release": "^17.2.1"
+    "semantic-release": "^19.0.3"
   },
   "peerDependencies": {
     "react": ">=16.0.0",
