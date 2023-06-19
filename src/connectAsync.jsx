@@ -118,7 +118,6 @@ export default function connectAsync({
           buildState({
             store: reduxStore,
             ownProps: restOfProps,
-            currentState: this.state,
           })
         );
       }
