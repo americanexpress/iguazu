@@ -180,13 +180,6 @@ export default function connectAsync({
 
     const Wrapper = ConnectAsync;
 
-    // Need this to update whenever the store updates
-    // if (optimizationEnabled) {
-    //   Wrapper = connect(
-    //     (state) => ({ iguazuState: config.getToState(state) })
-    //   )(ConnectAsync);
-    // }
-
     function ReduxConsumerWrapper(props) {
       return (
         <ReactReduxContext.Consumer>
