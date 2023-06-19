@@ -178,12 +178,10 @@ export default function connectAsync({
     ConnectAsync.loadDataAsProps = loadDataAsProps;
     ConnectAsync.displayName = `connectAsync(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
-    const Wrapper = ConnectAsync;
-
     function ReduxConsumerWrapper(props) {
       return (
         <ReactReduxContext.Consumer>
-          {({ store }) => <Wrapper {...props} reduxStore={store} />}
+          {({ store }) => <ConnectAsync {...props} reduxStore={store} />}
         </ReactReduxContext.Consumer>
       );
     }
