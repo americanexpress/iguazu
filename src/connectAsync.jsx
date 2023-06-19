@@ -35,9 +35,13 @@ export default function connectAsync({
   stateChangeComparator: localStateChangeComparator,
 }) {
   const ssrEnabled = loadDataAsProps.ssr;
-  function buildState({ store, ownProps }) {
-    const propFuncs = loadDataAsProps({ store, ownProps });
+  const optimizationEnabled = !!config.getToState;
+  let previousSelectedState;
 
+  function buildState({
+    store, ownProps,
+  }) {
+    const propFuncs = loadDataAsProps({ store, ownProps });
     let propResultMap;
     if (isServer() && !ssrEnabled) {
       propResultMap = mapValues(propFuncs, () => ({ status: 'loading' }));
@@ -53,7 +57,9 @@ export default function connectAsync({
      * unhandledrejection event, so we catch here to avoid that.
     */
     handlePromiseRejection(promise);
-
+    if (optimizationEnabled) {
+      previousSelectedState = config.getToState(store.getState());
+    }
     return {
       data: reduceData(propResultMap),
       status: reduceStatus(propResultMap),
@@ -103,7 +109,18 @@ export default function connectAsync({
 
       onReduxStateChange() {
         const { reduxStore, ...restOfProps } = this.props;
-        this.setStateIfNecessary(buildState({ store: reduxStore, ownProps: restOfProps }));
+        if (optimizationEnabled) {
+          if (previousSelectedState === config.getToState(reduxStore.getState())) {
+            return;
+          }
+        }
+        this.setStateIfNecessary(
+          buildState({
+            store: reduxStore,
+            ownProps: restOfProps,
+            currentState: this.state,
+          })
+        );
       }
 
       setStateIfNecessary(newState) {
@@ -161,10 +178,19 @@ export default function connectAsync({
     ConnectAsync.loadDataAsProps = loadDataAsProps;
     ConnectAsync.displayName = `connectAsync(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
+    const Wrapper = ConnectAsync;
+
+    // Need this to update whenever the store updates
+    // if (optimizationEnabled) {
+    //   Wrapper = connect(
+    //     (state) => ({ iguazuState: config.getToState(state) })
+    //   )(ConnectAsync);
+    // }
+
     function ReduxConsumerWrapper(props) {
       return (
         <ReactReduxContext.Consumer>
-          {({ store }) => <ConnectAsync {...props} reduxStore={store} />}
+          {({ store }) => <Wrapper {...props} reduxStore={store} />}
         </ReactReduxContext.Consumer>
       );
     }

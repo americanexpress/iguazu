@@ -53,7 +53,14 @@ jest.mock('../src/config', () => ({
 }));
 
 describe('connectAsync', () => {
-  function reducer(state = { param: 'x', x: 'populated data' }, action) {
+  const initialState = {
+    param: 'x',
+    x: 'populated data',
+    optimizationSection: {
+      test: 'hello',
+    },
+  };
+  function reducer(state = initialState, action) {
     switch (action.type) {
       case 'UPDATE_PARAM': {
         return { ...state, param: action.param };
@@ -62,6 +69,14 @@ describe('connectAsync', () => {
         const newData = {};
         newData[action.param] = action.data;
         return { ...state, ...newData };
+      }
+      case 'OPTIMIZATION': {
+        return {
+          ...state,
+          optimizationSection: {
+            ...action.data,
+          },
+        };
       }
       default: {
         return state;
@@ -105,6 +120,7 @@ describe('connectAsync', () => {
     mount = mountWithReduxContext({ store });
     loadDataAsProps.ssr = false;
     isServer.mockImplementation(() => false);
+    config.getToState = null;
   });
 
   afterEach(() => {
@@ -207,6 +223,29 @@ describe('connectAsync', () => {
     expect(props.myAsyncData).not.toBeDefined();
     expect(props.loadStatus).toEqual({ all: 'loading', myAsyncData: 'loading' });
     expect(myAsyncLoadFunction).toHaveBeenCalledTimes(3);
+  });
+  it('should not call loadDataAsProps if selected state has not changed', () => {
+    config.getToState = (state) => state.optimizationSection;
+    const Component = connectAsync({ loadDataAsProps })(Presentation);
+    const wrapper = mount(<Component irrelevant="old" />);
+    store.dispatch({ type: 'ADD_DATA', param: 'hello', data: 123 });
+    wrapper.update();
+    expect(loadDataAsProps).toHaveBeenCalledTimes(1);
+  });
+  it('should call loadDataAsProps if selected state has changed', () => {
+    config.getToState = (state) => state.optimizationSection;
+    const Component = connectAsync({ loadDataAsProps })(Presentation);
+    const wrapper = mount(<Component irrelevant="old" />);
+    store.dispatch({ type: 'OPTIMIZATION', param: 'hello', data: { 123: '456' } });
+    wrapper.update();
+    expect(loadDataAsProps).toHaveBeenCalledTimes(2);
+  });
+  it('should call loadDataAsProps if selected state has changed but props have changed', () => {
+    config.getToState = (state) => state.optimizationSection;
+    const Component = connectAsync({ loadDataAsProps })(Presentation);
+    const wrapper = mount(<Component irrelevant="old" />);
+    wrapper.setProps({ test: 'yes' });
+    expect(loadDataAsProps).toHaveBeenCalledTimes(2);
   });
 
   it('should not rerender when the store has updated, but the data and status are the same', () => {

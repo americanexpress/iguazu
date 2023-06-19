@@ -43,7 +43,8 @@
     "test": "jest && npm run test:git-history",
     "test:git-history": "commitlint --from origin/main --to HEAD",
     "test:lockfile": "lockfile-lint -p package-lock.json -t npm -a npm -o https: -c -i",
-    "posttest": "npm run lint && npm run test:lockfile"
+    "posttest": "npm run lint && npm run test:lockfile",
+    "prepack": "npm run build"
   },
   "jest": {
     "preset": "amex-jest-preset-react",

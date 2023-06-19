@@ -38,6 +38,12 @@ describe('config', () => {
         expect(config.stateChangeLimiter(onStateChange)).toBe(onStateChange);
       });
     });
+
+    describe('getToState', () => {
+      it('should default to null', () => {
+        expect(config.getToState).toBe(null);
+      });
+    });
   });
 
   describe('configureIguazu', () => {
