@@ -395,6 +395,22 @@ export default connectAsync({
 })(MyContainer);
 ```
 
+#### Selecting State to monitor
+
+Iguazu subscribes to the Redux store to check for updates in it's adapters (iguazu-rest, iguazu-rpc, etc...). While this is necessary to properly update your component when the data has been fetched, it can result in an oversubscription. Any value that changes in your Redux store will cause Iguazu to rebuild all of its state. This can result in additional renders in your application.
+
+To avoid this, you can configure a selector that tells Iguazu where to look for updates to the Redux store, and ignore every other change.
+
+To configure, set the `getToState` function in the `configureIguazu` function.
+
+```javascript
+import { configureIguazu } from 'iguazu';
+
+configureIguazu({
+  getToState: (state) => state.location,
+});
+```
+
 #### Limiting
 
 As some functions called within `loadDataAsProps` can be expensive when ran on every Redux state change, you are able to declare a limiter function when calling `connectAsync`. Calls to `loadDataAsProps` are not limited by default.
@@ -507,6 +523,7 @@ import { configureIguazu } from 'iguazu';
 configureIguazu({
   stateChangeComparator: shallowEqual, // applied globally.
   stateChangeLimiter: (onStateChange) => debounce(onStateChange, 100), // applied globally.
+  getToState: (state) => state.location, // applied globally.
 });
 
 /* ... */
